@@ -289,6 +289,19 @@ export class InteractiveUI {
     return showResponses;
   }
 
+  async askShowRawDebug(): Promise<boolean> {
+    const { showDebug } = await inquirer.prompt([
+      {
+        type: 'confirm',
+        name: 'showDebug',
+        message: 'Would you like to see raw response debug data (for troubleshooting models with no response)?',
+        default: false
+      }
+    ]);
+
+    return showDebug;
+  }
+
   showError(error: string) {
     console.log(chalk.red(`❌ Error: ${error}`));
     console.log();

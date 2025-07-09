@@ -52,6 +52,10 @@ export class DynamicResultsTable {
     this.responseDisplay.showCompletedResponses(this.results);
   }
 
+  showRawResponseDebug() {
+    this.responseDisplay.showRawResponseDebug(this.results);
+  }
+
   showFinalSummary() {
     this.summaryDisplay.showFinalSummary(this.results, this.isStreaming);
   }

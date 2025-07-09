@@ -114,6 +114,12 @@ class RequestyCLI {
     if (showResponses) {
       resultsTable.showCompletedResponses();
     }
+
+    // Ask user if they want to see raw debug data
+    const showRawDebug = await this.ui.askShowRawDebug();
+    if (showRawDebug) {
+      resultsTable.showRawResponseDebug();
+    }
     
     resultsTable.showFinalSummary();
   }
@@ -174,12 +180,20 @@ class RequestyCLI {
 
         if (result.success && result.response) {
           const usage = result.response.usage;
+          const inputTokens = usage?.prompt_tokens || 0;
+          const outputTokens = usage?.completion_tokens || 0;
+          const totalTokens = usage?.total_tokens || 0;
+          const reasoningTokens = totalTokens > 0 && inputTokens > 0 && outputTokens > 0 
+            ? totalTokens - inputTokens - outputTokens 
+            : 0;
+          
           resultsTable.updateModel(model, {
             status: 'completed',
             duration: result.duration,
-            inputTokens: usage?.prompt_tokens || 0,
-            outputTokens: usage?.completion_tokens || 0,
-            totalTokens: usage?.total_tokens || 0,
+            inputTokens,
+            outputTokens,
+            totalTokens,
+            reasoningTokens,
             response: result.response.choices[0]?.message?.content || 'No response'
           });
         } else {

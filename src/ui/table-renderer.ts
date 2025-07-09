@@ -15,13 +15,13 @@ export class TableRenderer {
     if (isStreaming) {
       headers.push('Duration', 'Speed', 'Tokens');
     } else {
-      headers.push('Duration', 'Input Tokens', 'Output Tokens', 'Total Tokens');
+      headers.push('Duration', 'Input Tokens', 'Output Tokens', 'Reasoning Tokens', 'Total Tokens');
     }
 
     this.table = new Table({
       head: headers,
       style: { head: ['cyan'] },
-      colWidths: isStreaming ? [25, 12, 12, 12, 12] : [25, 12, 12, 12, 12, 12]
+      colWidths: isStreaming ? [25, 12, 12, 12, 12] : [25, 12, 12, 12, 12, 12, 12]
     });
   }
 
@@ -82,6 +82,7 @@ export class TableRenderer {
           result.duration ? `${result.duration}ms` : '-',
           result.inputTokens ? result.inputTokens.toString() : '-',
           result.outputTokens ? result.outputTokens.toString() : '-',
+          result.reasoningTokens && result.reasoningTokens > 0 ? result.reasoningTokens.toString() : '-',
           result.totalTokens ? result.totalTokens.toString() : '-'
         ]);
       }

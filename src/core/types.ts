@@ -42,12 +42,14 @@ export interface ModelResult {
   model: string;
   success?: boolean;
   response?: ChatCompletionResponse | string;
+  rawResponse?: any; // The actual raw JSON response from the API
   error?: string;
   duration?: number;
   status?: 'pending' | 'running' | 'completed' | 'failed';
   inputTokens?: number;
   outputTokens?: number;
   totalTokens?: number;
+  reasoningTokens?: number;
   tokensPerSecond?: number;
 }
 
