@@ -93,13 +93,19 @@ export class TerminalUI {
       console.log(`${number} ${status} ${model} ${duration}`);
       
       if (result.success && result.response) {
-        const content = result.response.choices[0]?.message?.content || 'No response';
-        const truncated = content.length > 100 ? content.substring(0, 100) + '...' : content;
-        console.log(theme.dim(`   ${truncated.replace(/\n/g, ' ')}`));
-        
-        if (result.response.usage) {
-          const tokens = theme.dim(`   Tokens: ${result.response.usage.total_tokens} (${result.response.usage.prompt_tokens}+${result.response.usage.completion_tokens})`);
-          console.log(tokens);
+        if (typeof result.response === 'string') {
+          const content = result.response;
+          const truncated = content.length > 100 ? content.substring(0, 100) + '...' : content;
+          console.log(theme.dim(`   ${truncated.replace(/\n/g, ' ')}`));
+        } else {
+          const content = result.response.choices[0]?.message?.content || 'No response';
+          const truncated = content.length > 100 ? content.substring(0, 100) + '...' : content;
+          console.log(theme.dim(`   ${truncated.replace(/\n/g, ' ')}`));
+          
+          if (result.response.usage) {
+            const tokens = theme.dim(`   Tokens: ${result.response.usage.total_tokens} (${result.response.usage.prompt_tokens}+${result.response.usage.completion_tokens})`);
+            console.log(tokens);
+          }
         }
       } else if (result.error) {
         console.log(theme.error(`   Error: ${result.error}`));

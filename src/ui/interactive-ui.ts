@@ -276,6 +276,19 @@ export class InteractiveUI {
     return cont;
   }
 
+  async askShowResponses(): Promise<boolean> {
+    const { showResponses } = await inquirer.prompt([
+      {
+        type: 'confirm',
+        name: 'showResponses',
+        message: 'Would you like to see all the response content?',
+        default: false
+      }
+    ]);
+
+    return showResponses;
+  }
+
   showError(error: string) {
     console.log(chalk.red(`❌ Error: ${error}`));
     console.log();

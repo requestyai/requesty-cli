@@ -7,6 +7,7 @@ import { StreamingClient } from '../core/streaming';
 import { DynamicResultsTable } from '../ui/dynamic-table';
 import { CLIConfig, ChatCompletionRequest } from '../core/types';
 import { DEFAULT_MODELS } from '../models/models';
+import { KeyManager } from '../utils/key-manager';
 
 const DEFAULT_CONFIG: CLIConfig = {
   baseURL: 'https://router.requesty.ai/v1',
@@ -20,16 +21,26 @@ class RequestyCLI {
   private streaming: StreamingClient;
   private ui: InteractiveUI;
   private config: CLIConfig;
+  private keyManager: KeyManager;
 
   constructor(config: CLIConfig) {
     this.config = config;
     this.api = new RequestyAPI(config);
     this.streaming = new StreamingClient(config);
     this.ui = new InteractiveUI();
+    this.keyManager = new KeyManager();
   }
 
   async run() {
     try {
+      // Get API key if not provided
+      if (!this.config.apiKey) {
+        this.config.apiKey = await this.keyManager.getApiKey();
+        // Update API instances with the key
+        this.api = new RequestyAPI(this.config);
+        this.streaming = new StreamingClient(this.config);
+      }
+
       // Load available models
       const models = await this.api.getModels();
       await this.ui.initializeModels(models);
@@ -94,7 +105,12 @@ class RequestyCLI {
       await this.runStandardTests(models, prompt, resultsTable);
     }
 
-    resultsTable.showCompletedResponses();
+    // Ask user if they want to see responses
+    const showResponses = await this.ui.askShowResponses();
+    if (showResponses) {
+      resultsTable.showCompletedResponses();
+    }
+    
     resultsTable.showFinalSummary();
   }
 

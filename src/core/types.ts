@@ -40,10 +40,15 @@ export interface ChatCompletionResponse {
 
 export interface ModelResult {
   model: string;
-  success: boolean;
-  response?: ChatCompletionResponse;
+  success?: boolean;
+  response?: ChatCompletionResponse | string;
   error?: string;
   duration?: number;
+  status?: 'pending' | 'running' | 'completed' | 'failed';
+  inputTokens?: number;
+  outputTokens?: number;
+  totalTokens?: number;
+  tokensPerSecond?: number;
 }
 
 export interface CLIConfig {
