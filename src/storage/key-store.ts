@@ -45,7 +45,7 @@ export class EncryptedKeyStore implements KeyStore {
       const key = this.deriveKey(password);
       
       const iv = crypto.randomBytes(16);
-      const cipher = crypto.createCipher(this.algorithm, key);
+      const cipher = crypto.createCipher(this.algorithm, key.toString('hex'));
       
       let encrypted = cipher.update(apiKey, 'utf8', 'hex');
       encrypted += cipher.final('hex');
@@ -72,7 +72,7 @@ export class EncryptedKeyStore implements KeyStore {
       const password = this.getMachinePassword();
       const key = this.deriveKey(password);
       
-      const decipher = crypto.createDecipher(this.algorithm, key);
+      const decipher = crypto.createDecipher(this.algorithm, key.toString('hex'));
       
       let decrypted = decipher.update(encryptedData.encrypted, 'hex', 'utf8');
       decrypted += decipher.final('utf8');
