@@ -32,7 +32,6 @@ export class RequestyAPI {
       const response = await this.openai.chat.completions.create({
         model: request.model,
         messages: request.messages,
-        max_tokens: request.max_tokens,
         temperature: request.temperature,
         stream: request.stream || false,
       });
@@ -45,14 +44,13 @@ export class RequestyAPI {
     }
   }
 
-  async testModel(model: string, prompt: string): Promise<{ success: boolean; response?: ChatCompletionResponse; error?: string; duration: number }> {
+  async testModel(model: string, prompt: string): Promise<{ success: boolean; response?: ChatCompletionResponse; rawResponse?: any; error?: string; duration: number }> {
     const startTime = Date.now();
     
     try {
       const request: ChatCompletionRequest = {
         model,
         messages: [{ role: 'user', content: prompt }],
-        max_tokens: this.config.maxTokens,
         temperature: this.config.temperature,
         stream: false
       };
@@ -63,6 +61,7 @@ export class RequestyAPI {
       return {
         success: true,
         response,
+        rawResponse: response, // Store the raw response for debugging
         duration
       };
     } catch (error) {

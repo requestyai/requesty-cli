@@ -13,7 +13,6 @@ export interface ChatMessage {
 export interface ChatCompletionRequest {
   model: string;
   messages: ChatMessage[];
-  max_tokens?: number;
   temperature?: number;
   stream?: boolean;
 }
@@ -57,6 +56,5 @@ export interface CLIConfig {
   apiKey?: string;
   baseURL: string;
   timeout: number;
-  maxTokens: number;
   temperature: number;
 }

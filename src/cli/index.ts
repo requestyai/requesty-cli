@@ -12,7 +12,6 @@ import { KeyManager } from '../utils/key-manager';
 const DEFAULT_CONFIG: CLIConfig = {
   baseURL: 'https://router.requesty.ai/v1',
   timeout: 60000,
-  maxTokens: 500,
   temperature: 0.7
 };
 
@@ -131,7 +130,6 @@ class RequestyCLI {
       const request: ChatCompletionRequest = {
         model,
         messages: [{ role: 'user', content: prompt }],
-        max_tokens: this.config.maxTokens,
         temperature: this.config.temperature,
         stream: true
       };
@@ -194,13 +192,15 @@ class RequestyCLI {
             outputTokens,
             totalTokens,
             reasoningTokens,
-            response: result.response.choices[0]?.message?.content || 'No response'
+            response: result.response.choices[0]?.message?.content || 'No response',
+            rawResponse: result.rawResponse
           });
         } else {
           resultsTable.updateModel(model, {
             status: 'failed',
             duration: result.duration,
-            error: result.error
+            error: result.error,
+            rawResponse: result.rawResponse
           });
         }
       } catch (error) {
@@ -226,14 +226,12 @@ async function main() {
   program
     .option('-k, --api-key <key>', 'API key for authentication')
     .option('-t, --timeout <ms>', 'Request timeout in milliseconds', '60000')
-    .option('-m, --max-tokens <tokens>', 'Maximum tokens per response', '500')
     .option('--temperature <temp>', 'Temperature for responses', '0.7')
     .action(async (options) => {
       const config: CLIConfig = {
         ...DEFAULT_CONFIG,
         apiKey: options.apiKey || process.env.REQUESTY_API_KEY,
         timeout: parseInt(options.timeout),
-        maxTokens: parseInt(options.maxTokens),
         temperature: parseFloat(options.temperature)
       };
 

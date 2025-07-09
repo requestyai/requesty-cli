@@ -40,7 +40,6 @@ export class StreamingClient {
       const stream = await this.openai.chat.completions.create({
         model: request.model,
         messages: request.messages,
-        max_tokens: request.max_tokens,
         temperature: request.temperature,
         stream: true,
       });

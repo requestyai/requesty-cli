@@ -41,43 +41,46 @@ export class ResponseDisplay {
         console.log(chalk.red(`  Error: ${result.error}`));
       }
       
+      // Show the TRUE RAW API response
+      if (result.rawResponse !== undefined) {
+        console.log(chalk.magenta.bold('  🔥 TRUE RAW API RESPONSE (JSON):'));
+        console.log(chalk.cyan(JSON.stringify(result.rawResponse, null, 2)));
+      } else {
+        console.log(chalk.red(`  Raw Response: undefined`));
+      }
+      
+      // Show processed response for comparison
       if (result.response !== undefined) {
-        console.log(chalk.gray(`  Response Type: ${typeof result.response}`));
+        console.log(chalk.blue('  📝 Processed Response:'));
         
         if (typeof result.response === 'string') {
-          console.log(chalk.gray(`  Response Length: ${result.response.length}`));
-          console.log(chalk.blue(`  String Response:`));
-          console.log(chalk.cyan(result.response));
+          console.log(chalk.gray(`    Type: string (length: ${result.response.length})`));
+          console.log(chalk.cyan(`    Content: ${result.response.substring(0, 200)}${result.response.length > 200 ? '...' : ''}`));
         } else {
           // It's a ChatCompletionResponse object
-          console.log(chalk.blue(`  Response Object Structure:`));
-          console.log(chalk.gray(`    - ID: ${result.response.id || 'N/A'}`));
-          console.log(chalk.gray(`    - Model: ${result.response.model || 'N/A'}`));
-          console.log(chalk.gray(`    - Choices Length: ${result.response.choices?.length || 0}`));
+          console.log(chalk.gray(`    Type: object`));
+          console.log(chalk.gray(`    ID: ${result.response.id || 'N/A'}`));
+          console.log(chalk.gray(`    Model: ${result.response.model || 'N/A'}`));
+          console.log(chalk.gray(`    Choices Length: ${result.response.choices?.length || 0}`));
           
           if (result.response.choices && result.response.choices.length > 0) {
             const choice = result.response.choices[0];
-            console.log(chalk.gray(`    - Choice[0] Message Role: ${choice.message?.role || 'N/A'}`));
-            console.log(chalk.gray(`    - Choice[0] Message Content Length: ${choice.message?.content?.length || 0}`));
-            console.log(chalk.blue(`    - Choice[0] Message Content:`));
-            console.log(chalk.cyan(choice.message?.content || 'NO CONTENT'));
+            const content = choice.message?.content || '';
+            console.log(chalk.gray(`    Content Length: ${content.length}`));
+            console.log(chalk.cyan(`    Content: ${content.substring(0, 200)}${content.length > 200 ? '...' : ''}`));
           }
           
           if (result.response.usage) {
-            console.log(chalk.gray(`    - Usage Prompt Tokens: ${result.response.usage.prompt_tokens || 'N/A'}`));
-            console.log(chalk.gray(`    - Usage Completion Tokens: ${result.response.usage.completion_tokens || 'N/A'}`));
-            console.log(chalk.gray(`    - Usage Total Tokens: ${result.response.usage.total_tokens || 'N/A'}`));
+            console.log(chalk.gray(`    Usage: ${result.response.usage.prompt_tokens}+${result.response.usage.completion_tokens}=${result.response.usage.total_tokens} tokens`));
           } else {
-            console.log(chalk.red(`    - Usage: undefined`));
+            console.log(chalk.red(`    Usage: undefined`));
           }
-          
-          console.log(chalk.blue(`  Full Raw Response:`));
-          console.log(chalk.cyan(JSON.stringify(result.response, null, 2)));
         }
       } else {
-        console.log(chalk.red(`  Response: undefined`));
+        console.log(chalk.red(`  Processed Response: undefined`));
       }
       
+      console.log(chalk.gray('─'.repeat(80)));
       console.log();
     });
   }
