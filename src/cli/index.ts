@@ -247,6 +247,28 @@ async function main() {
     .description('Interactive AI Model Testing CLI with Streaming')
     .version('2.0.0');
 
+  // PDF Chat command
+  program
+    .command('pdf-chat')
+    .description('Chat with a PDF document using AI')
+    .argument('<pdf-path>', 'Path to the PDF file to chat with')
+    .option('-m, --model <model>', 'AI model to use for chat', 'gpt-4o')
+    .option('-k, --api-key <key>', 'API key for authentication')
+    .option('-t, --timeout <ms>', 'Request timeout in milliseconds', '60000')
+    .option('--temperature <temp>', 'Temperature for responses', '0.7')
+    .action(async (pdfPath, options) => {
+      const config: CLIConfig = {
+        ...DEFAULT_CONFIG,
+        apiKey: options.apiKey || process.env.REQUESTY_API_KEY,
+        timeout: parseInt(options.timeout),
+        temperature: parseFloat(options.temperature)
+      };
+
+      const pdfChatUI = new PDFChatUI(config);
+      await pdfChatUI.startPDFChat(pdfPath, options.model);
+    });
+
+  // Default command (original functionality)
   program
     .option('-k, --api-key <key>', 'API key for authentication')
     .option('-t, --timeout <ms>', 'Request timeout in milliseconds', '60000')
