@@ -10,6 +10,8 @@ A beautiful, interactive TypeScript CLI for testing AI models with **real-time s
 - 📊 **Live Progress Tracking** - Visual progress bars with speed indicators
 - 🔄 **Persistent Session** - Stay in the CLI, test multiple prompts
 - 🌈 **Rich Terminal Experience** - Tables, spinners, and beautiful formatting
+- 📄 **PDF Chat** - Upload and chat with PDF documents using AI
+- 👍 **Feedback System** - Give thumbs up/down feedback after each AI response
 
 ## 🎯 Default Models
 
@@ -64,6 +66,67 @@ REQUESTY_API_KEY=your-api-key node dist/index.js
 ```bash
 node dist/index.js --api-key your-key --max-tokens 1000 --temperature 0.8
 ```
+
+## 📄 PDF Chat with Feedback
+
+### Upload and Chat with PDFs
+```bash
+# Basic PDF chat
+node dist/cli/index.js pdf-chat path/to/document.pdf
+
+# With custom model and options
+node dist/cli/index.js pdf-chat document.pdf -m openai/gpt-4o --temperature 0.5
+```
+
+### PDF Chat Flow
+
+1. **PDF Upload & Processing**
+   ```
+   📄 Converting PDF to markdown...
+   ✅ Successfully processed PDF:
+      📄 File: document.pdf
+      📊 Pages: 25
+      📝 Words: 8,542
+      🔤 Characters: 52,031
+   🚀 PDF chat session initialized!
+   💡 Ask your first question about the document...
+   ```
+
+2. **Interactive Chat**
+   ```
+   🔍 Your first question about the PDF: What are the main topics covered?
+   
+   🤖 Expert Analysis:
+   [AI streams response in real-time...]
+   
+   ⏱️  Response time: 1,247ms
+   ```
+
+3. **Feedback System** (NEW!)
+   ```
+   Give feedback? (u = 👍, d = 👎, enter to skip): u
+   Sending feedback 👍...
+   ✅ Feedback sent successfully! 👍
+   
+   💬 Your follow-up question: Tell me more about section 3...
+   ```
+
+### PDF Chat Commands
+- **Ask questions** - Any question about the PDF content
+- **"info"** - Show session information (pages, words, model, etc.)
+- **"summary"** - Show conversation summary
+- **"help"** - Show available commands
+- **"exit"** or **"quit"** - End the session
+
+### Feedback System
+After each AI response, you'll see:
+```
+Give feedback? (u = 👍, d = 👎, enter to skip):
+```
+- Type **"u"** for thumbs up 👍
+- Type **"d"** for thumbs down 👎  
+- Press **Enter** to skip
+- Feedback is sent to the Requesty feedback API automatically
 
 ## 🎮 Interactive Flow
 
@@ -150,14 +213,33 @@ Coffee fuels the dream.
 
 ## 🎛️ Command Line Options
 
+### Main CLI Options
 ```bash
 Options:
   -k, --api-key <key>          API key for authentication
   -t, --timeout <ms>           Request timeout in milliseconds (default: 60000)
-  -m, --max-tokens <tokens>    Maximum tokens per response (default: 500)
   --temperature <temp>         Temperature for responses (default: 0.7)
   -h, --help                   Display help for command
   -V, --version                Display version number
+
+Commands:
+  security                     Show security status and configuration
+  pdf-chat <pdf-path>          Chat with a PDF document using AI
+```
+
+### PDF Chat Options
+```bash
+Usage: requesty pdf-chat [options] <pdf-path>
+
+Arguments:
+  pdf-path                     Path to the PDF file to chat with
+
+Options:
+  -m, --model <model>          AI model to use for chat (default: "openai/gpt-4o")
+  -k, --api-key <key>          API key for authentication
+  -t, --timeout <ms>           Request timeout in milliseconds (default: "60000")
+  --temperature <temp>         Temperature for responses (default: "0.7")
+  -h, --help                   Display help for command
 ```
 
 ## 🔐 Authentication

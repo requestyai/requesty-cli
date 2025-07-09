@@ -37,12 +37,19 @@ export class StreamingClient {
     let totalTokens = 0;
 
     try {
-      const stream = await this.openai.chat.completions.create({
+      const requestParams: any = {
         model: request.model,
         messages: request.messages,
         temperature: request.temperature,
         stream: true,
-      });
+      };
+
+      // Add Requesty metadata directly to request body (Test 5 approach that works!)
+      if (request.requesty) {
+        requestParams.requesty = request.requesty;
+      }
+
+      const stream = await this.openai.chat.completions.create(requestParams) as any;
 
       for await (const chunk of stream) {
         const content = chunk.choices[0]?.delta?.content;

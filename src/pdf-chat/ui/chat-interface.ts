@@ -34,6 +34,7 @@ export class PDFChatInterface {
     } catch (error) {
       ConsoleFormatter.printError(error instanceof Error ? error.message : 'Unknown error');
     } finally {
+      this.client.endSession();
       this.rl.close();
     }
   }
@@ -146,9 +147,46 @@ export class PDFChatInterface {
 
       console.log(ConsoleFormatter.info(`\n⏱️  Response time: ${response.responseTime}ms`));
       
+      // Handle feedback if we have a request ID
+      if (response.requestId) {
+        await this.handleFeedback(response.requestId);
+      }
+      
     } catch (error) {
       throw new Error(`Failed to process question: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
+  }
+
+  private async handleFeedback(requestId: string): Promise<void> {
+    return new Promise((resolve) => {
+      this.rl.question(chalk.cyan('\nGive feedback? (u = 👍, d = 👎, enter to skip): '), async (input) => {
+        const trimmedInput = input.trim().toLowerCase();
+        
+        if (trimmedInput === 'u' || trimmedInput === 'd') {
+          const thumbs = trimmedInput === 'u' ? 'up' : 'down';
+          const emoji = thumbs === 'up' ? '👍' : '👎';
+          
+          try {
+            console.log(ConsoleFormatter.info(`Sending feedback ${emoji}...`));
+            const feedbackResult = await this.client.sendFeedback(requestId, thumbs);
+            
+            if (feedbackResult.success) {
+              console.log(ConsoleFormatter.success(`✅ Feedback sent successfully! ${emoji}`));
+            } else {
+              console.log(ConsoleFormatter.info(`⚠️  Failed to send feedback: ${feedbackResult.error}`));
+            }
+          } catch (error) {
+            console.log(ConsoleFormatter.info(`⚠️  Error sending feedback: ${error instanceof Error ? error.message : 'Unknown error'}`));
+          }
+        } else if (trimmedInput === '') {
+          // User pressed enter to skip
+        } else {
+          console.log(ConsoleFormatter.info('Invalid input. Skipping feedback.'));
+        }
+        
+        resolve();
+      });
+    });
   }
 
   private displayWelcome(): void {

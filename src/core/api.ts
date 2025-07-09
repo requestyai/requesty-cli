@@ -29,12 +29,19 @@ export class RequestyAPI {
 
   async sendChatCompletion(request: ChatCompletionRequest): Promise<ChatCompletionResponse> {
     try {
-      const response = await this.openai.chat.completions.create({
+      const requestParams: any = {
         model: request.model,
         messages: request.messages,
         temperature: request.temperature,
         stream: request.stream || false,
-      });
+      };
+
+      // Add Requesty metadata directly to request body (Test 5 approach that works!)
+      if (request.requesty) {
+        requestParams.requesty = request.requesty;
+      }
+
+      const response = await this.openai.chat.completions.create(requestParams);
       return response as ChatCompletionResponse;
     } catch (error) {
       if (error instanceof OpenAI.APIError) {
@@ -44,7 +51,7 @@ export class RequestyAPI {
     }
   }
 
-  async testModel(model: string, prompt: string): Promise<{ success: boolean; response?: ChatCompletionResponse; rawResponse?: any; error?: string; duration: number }> {
+  async testModel(model: string, prompt: string, metadata?: any): Promise<{ success: boolean; response?: ChatCompletionResponse; rawResponse?: any; error?: string; duration: number }> {
     const startTime = Date.now();
     
     try {
@@ -52,7 +59,8 @@ export class RequestyAPI {
         model,
         messages: [{ role: 'user', content: prompt }],
         temperature: this.config.temperature,
-        stream: false
+        stream: false,
+        requesty: metadata
       };
 
       const response = await this.sendChatCompletion(request);

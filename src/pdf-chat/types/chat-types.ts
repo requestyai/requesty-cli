@@ -35,6 +35,12 @@ export interface ChatResponse {
   error?: string;
   tokensUsed?: number;
   responseTime?: number;
+  requestId?: string; // For Requesty feedback system
+}
+
+export interface FeedbackResponse {
+  success: boolean;
+  error?: string;
 }
 
 export interface PDFChatConfig {

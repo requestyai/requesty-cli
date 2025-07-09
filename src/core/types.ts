@@ -32,6 +32,7 @@ export interface ChatCompletionRequest {
   messages: ChatMessage[];
   temperature?: number;
   stream?: boolean;
+  requesty?: any; // For Requesty metadata
 }
 
 export interface ChatCompletionResponse {
