@@ -9,7 +9,8 @@ import { CLIConfig, ChatCompletionRequest, ModelInfo } from '../core/types';
 import { DEFAULT_MODELS } from '../models/models';
 import { KeyManager } from '../utils/key-manager';
 import { PricingCalculator } from '../utils/pricing';
-import { PDFMarkdownChatUI } from '../ui/pdf-markdown-chat-ui';
+import { PDFChatInterface } from '../pdf-chat/ui/chat-interface';
+import { PDFChatConfig } from '../pdf-chat/types/chat-types';
 
 const DEFAULT_CONFIG: CLIConfig = {
   baseURL: 'https://router.requesty.ai/v1',
@@ -109,8 +110,16 @@ class RequestyCLI {
       const pdfPath = await this.ui.getPDFPath();
       const model = await this.ui.getPDFModel();
       
-      const pdfMarkdownChatUI = new PDFMarkdownChatUI(this.config);
-      await pdfMarkdownChatUI.startPDFChat(pdfPath, model);
+      // Create PDF chat configuration
+      const pdfChatConfig: PDFChatConfig = {
+        model,
+        temperature: this.config.temperature,
+        includeSystemPrompt: true,
+        conversationHistory: true
+      };
+      
+      const pdfChatInterface = new PDFChatInterface(this.config, pdfChatConfig);
+      await pdfChatInterface.start(pdfPath);
     } catch (error) {
       this.ui.showError(error instanceof Error ? error.message : 'Failed to start PDF chat');
     }
@@ -285,8 +294,16 @@ async function main() {
         temperature: parseFloat(options.temperature)
       };
 
-      const pdfMarkdownChatUI = new PDFMarkdownChatUI(config);
-      await pdfMarkdownChatUI.startPDFChat(pdfPath, options.model);
+      // Create PDF chat configuration
+      const pdfChatConfig: PDFChatConfig = {
+        model: options.model,
+        temperature: parseFloat(options.temperature),
+        includeSystemPrompt: true,
+        conversationHistory: true
+      };
+      
+      const pdfChatInterface = new PDFChatInterface(config, pdfChatConfig);
+      await pdfChatInterface.start(pdfPath);
     });
 
   // Default command (original functionality)
