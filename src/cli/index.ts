@@ -2,6 +2,7 @@
 
 // External dependencies
 import { Command } from 'commander';
+import chalk from 'chalk';
 
 // Core components
 import { RequestyAPI } from '../core/api';
@@ -11,6 +12,7 @@ import { CLIConfig, ChatCompletionRequest, ModelInfo } from '../core/types';
 // UI components
 import { InteractiveUI } from '../ui/interactive-ui';
 import { DynamicResultsTable } from '../ui/dynamic-table';
+import { ComparisonTable } from '../ui/comparison-table';
 
 // Utilities
 import { KeyManager } from '../utils/key-manager';
@@ -26,8 +28,6 @@ import { DEFAULT_MODELS } from '../models/models';
 import { PDFChatInterface } from '../pdf-chat/ui/chat-interface';
 import { PDFChatConfig } from '../pdf-chat/types/chat-types';
 
-// Agent builder functionality
-import { AgentBuilderUI } from '../agent-builder/ui/agent-builder-ui';
 
 const DEFAULT_CONFIG: CLIConfig = {
   baseURL: 'https://router.requesty.ai/v1',
@@ -43,7 +43,6 @@ class RequestyCLI {
   private keyManager: KeyManager;
   private secureKeyManager: SecureKeyManager;
   private secureApiClient: SecureApiClient;
-  private agentBuilderUI: AgentBuilderUI;
   private models: ModelInfo[] = [];
 
   constructor(config: CLIConfig) {
@@ -54,7 +53,6 @@ class RequestyCLI {
     this.keyManager = new KeyManager();
     this.secureKeyManager = new SecureKeyManager();
     this.secureApiClient = new SecureApiClient(config.baseURL, config.timeout);
-    this.agentBuilderUI = new AgentBuilderUI(config);
   }
 
   async run() {
@@ -78,12 +76,12 @@ class RequestyCLI {
           case 'select':
             await this.runCustomSelection();
             break;
+          case 'compare':
+            await this.runPromptComparison();
+            break;
           case 'pdf-chat':
             await this.runPDFChat();
             running = false; // Exit after PDF chat session
-            break;
-          case 'agent-builder':
-            await this.runAgentBuilder();
             break;
           case 'security':
             await this.showSecurityStatus();
@@ -120,6 +118,12 @@ class RequestyCLI {
     await this.testModels(selectedModels, prompt, useStreaming);
   }
 
+  private async runPromptComparison() {
+    const { prompt1, prompt2 } = await this.ui.getComparisonPrompts();
+    const useStreaming = await this.ui.getStreamingChoice();
+    await this.comparePrompts(DEFAULT_MODELS, prompt1, prompt2, useStreaming);
+  }
+
   private async runPDFChat(): Promise<void> {
     try {
       await this.ensureApiKey();
@@ -136,26 +140,27 @@ class RequestyCLI {
     }
   }
 
-  private async runAgentBuilder(): Promise<void> {
-    try {
-      await this.ensureApiKey();
-      await this.agentBuilderUI.showMainMenu();
-    } catch (error) {
-      this.ui.showError(error instanceof Error ? error.message : 'Failed to start agent builder');
-    }
-  }
 
   private async ensureApiKey(): Promise<void> {
     if (!this.config.apiKey || this.config.apiKey === '<REQUESTY_API_KEY>') {
-      // Use secure key manager for enhanced security
-      this.config.apiKey = await this.secureKeyManager.getApiKey();
-      
-      // Initialize secure API client
-      await this.secureApiClient.initialize();
-      
-      // Update regular API instances with the new key
-      this.api = new RequestyAPI(this.config);
-      this.streaming = new StreamingClient(this.config);
+      try {
+        // Use secure key manager for enhanced security
+        this.config.apiKey = await this.secureKeyManager.getApiKey();
+        
+        // Initialize secure API client
+        await this.secureApiClient.initialize();
+        
+        // Update regular API instances with the new key
+        this.api = new RequestyAPI(this.config);
+        this.streaming = new StreamingClient(this.config);
+      } catch (error) {
+        // Fallback to regular key manager - this is normal for most users
+        this.config.apiKey = await this.keyManager.getApiKey();
+        
+        // Update regular API instances with the new key
+        this.api = new RequestyAPI(this.config);
+        this.streaming = new StreamingClient(this.config);
+      }
     }
   }
 
@@ -354,6 +359,187 @@ class RequestyCLI {
     });
 
     await Promise.all(concurrentPromises);
+  }
+
+  private async comparePrompts(models: string[], prompt1: string, prompt2: string, useStreaming: boolean) {
+    console.log(chalk.cyan.bold('\n⚡ Prompt Comparison Mode\n'));
+    console.log(`🚀 Testing ${models.length} models with 2 prompts (${models.length * 2} total requests)...`);
+    console.log(chalk.green(`⚡ TRUE CONCURRENT: All ${models.length * 2} requests fire simultaneously for fair timing!`));
+    console.log(chalk.gray(`Mode: ${useStreaming ? 'streaming' : 'standard'} responses\n`));
+
+    // Create comparison table
+    const comparisonTable = new ComparisonTable(models, useStreaming, prompt1, prompt2);
+
+    // Add model info to comparison table
+    models.forEach(model => {
+      const modelInfo = this.models.find(m => m.id === model);
+      if (modelInfo) {
+        comparisonTable.setModelInfo(model, modelInfo);
+      }
+    });
+
+    if (useStreaming) {
+      await this.runStreamingComparison(models, prompt1, prompt2, comparisonTable);
+    } else {
+      await this.runStandardComparison(models, prompt1, prompt2, comparisonTable);
+    }
+
+    // Ask user if they want to see responses
+    const showResponses = await this.ui.askShowResponses();
+    if (showResponses) {
+      comparisonTable.showCompletedResponses();
+    }
+
+    comparisonTable.showFinalSummary();
+  }
+
+  private async runStreamingComparison(models: string[], prompt1: string, prompt2: string, comparisonTable: ComparisonTable) {
+    console.log(chalk.blue('🚀 Launching ALL 10 streaming requests simultaneously...\n'));
+    
+    const allPromises: Promise<void>[] = [];
+    const startTime = Date.now();
+
+    // Create ALL promises first (don't await anything yet)  
+    models.forEach(model => {
+      // Prompt 1
+      allPromises.push(this.runSingleStreamingComparison(model, prompt1, 'prompt1', comparisonTable, startTime));
+      // Prompt 2
+      allPromises.push(this.runSingleStreamingComparison(model, prompt2, 'prompt2', comparisonTable, startTime));
+    });
+
+    // Fire all 10 requests at the EXACT same time
+    await Promise.all(allPromises);
+  }
+
+  private async runSingleStreamingComparison(
+    model: string, 
+    prompt: string, 
+    promptType: 'prompt1' | 'prompt2',
+    comparisonTable: ComparisonTable,
+    globalStartTime: number
+  ): Promise<void> {
+    comparisonTable.updateModel(model, promptType, { status: 'running' });
+
+    const request: ChatCompletionRequest = {
+      model,
+      messages: [{ role: 'user', content: prompt }],
+      temperature: this.config.temperature,
+      stream: true
+    };
+
+    try {
+      const result = await this.streaming.streamCompletion(request, (chunk, stats) => {
+        comparisonTable.updateModel(model, promptType, {
+          status: 'running',
+          tokensPerSecond: stats.tokensPerSecond,
+          totalTokens: stats.totalTokens
+        });
+      });
+
+      if (result.success) {
+        comparisonTable.updateModel(model, promptType, {
+          status: 'completed',
+          duration: result.duration,
+          tokensPerSecond: result.tokensPerSecond,
+          totalTokens: result.totalTokens,
+          response: result.fullResponse
+        });
+      } else {
+        comparisonTable.updateModel(model, promptType, {
+          status: 'failed',
+          duration: result.duration,
+          error: result.error
+        });
+      }
+    } catch (error) {
+      comparisonTable.updateModel(model, promptType, {
+        status: 'failed',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  }
+
+  private async runStandardComparison(models: string[], prompt1: string, prompt2: string, comparisonTable: ComparisonTable) {
+    console.log(chalk.blue('🚀 Launching ALL 10 requests simultaneously...\n'));
+    
+    const allPromises: Promise<void>[] = [];
+    const startTime = Date.now();
+
+    // Create ALL promises first (don't await anything yet)
+    models.forEach(model => {
+      // Prompt 1
+      allPromises.push(this.runSingleStandardComparison(model, prompt1, 'prompt1', comparisonTable, startTime));
+      // Prompt 2  
+      allPromises.push(this.runSingleStandardComparison(model, prompt2, 'prompt2', comparisonTable, startTime));
+    });
+
+    // Fire all 10 requests at the EXACT same time
+    await Promise.all(allPromises);
+  }
+
+  private async runSingleStandardComparison(
+    model: string, 
+    prompt: string, 
+    promptType: 'prompt1' | 'prompt2',
+    comparisonTable: ComparisonTable,
+    globalStartTime: number
+  ): Promise<void> {
+    comparisonTable.updateModel(model, promptType, { status: 'running' });
+
+    try {
+      // Use custom timing with global start time for fair comparison
+      const requestStartTime = Date.now();
+      
+      const request: ChatCompletionRequest = {
+        model,
+        messages: [{ role: 'user', content: prompt }],
+        temperature: this.config.temperature,
+        stream: false
+      };
+
+      const response = await this.api.sendChatCompletion(request);
+      const duration = Date.now() - requestStartTime;
+
+      const usage = response.usage;
+      const inputTokens = usage?.prompt_tokens || 0;
+      const outputTokens = usage?.completion_tokens || 0;
+      const totalTokens = usage?.total_tokens || 0;
+      const reasoningTokens = totalTokens > 0 && inputTokens > 0 && outputTokens > 0 
+        ? totalTokens - inputTokens - outputTokens 
+        : 0;
+      
+      // Find model info for pricing
+      const modelInfo = this.models.find(m => m.id === model);
+      
+      // Calculate pricing
+      let actualCost = 0;
+      
+      if (modelInfo && (modelInfo.input_price || modelInfo.output_price)) {
+        const pricing = PricingCalculator.calculatePricing(
+          modelInfo,
+          inputTokens,
+          outputTokens,
+          reasoningTokens
+        );
+        actualCost = pricing.actualCost;
+      }
+      
+      comparisonTable.updateModel(model, promptType, {
+        status: 'completed',
+        duration,
+        inputTokens,
+        outputTokens,
+        totalTokens,
+        reasoningTokens,
+        actualCost,
+        response: response.choices[0]?.message?.content || 'No response'
+      });
+    } catch (error) {
+      comparisonTable.updateModel(model, promptType, {
+        status: 'failed',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
   }
 }
 

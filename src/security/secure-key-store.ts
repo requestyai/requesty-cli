@@ -101,8 +101,8 @@ export class SecureKeyStore {
     this.acquireLock();
 
     try {
-      // Generate secure encryption materials
-      const masterPassword = CryptoManager.generateSecurePassword();
+      // Generate secure encryption materials using machine fingerprint
+      const masterPassword = this.machineFingerprint;
       const salt = CryptoManager.generateSalt();
       const derivedKey = CryptoManager.deriveKey(masterPassword, salt);
 
@@ -125,8 +125,7 @@ export class SecureKeyStore {
       const metadata = this.createMetadata();
       fs.writeFileSync(this.metadataFilePath, JSON.stringify(metadata), { mode: 0o600 });
 
-      // Store master password in memory (this is the weak point we'll address)
-      process.env.REQUESTY_MASTER_KEY = masterPassword;
+      // Master password is derived from machine fingerprint, no need to store in memory
 
       // Clear sensitive data from memory
       CryptoManager.secureZeroMemory(derivedKey);
@@ -160,11 +159,9 @@ export class SecureKeyStore {
       const payloadContent = fs.readFileSync(this.keyFilePath, 'utf8');
       const payload = JSON.parse(payloadContent);
 
-      // Retrieve master password (in production, this should be from secure input)
-      const masterPassword = process.env.REQUESTY_MASTER_KEY;
-      if (!masterPassword) {
-        throw new Error('Master key not available in memory');
-      }
+      // Use machine fingerprint as master password for consistency
+      // This way we don't need to store the master password in memory
+      const masterPassword = this.machineFingerprint;
 
       // Reconstruct encryption materials
       const salt = Buffer.from(payload.salt, 'base64');

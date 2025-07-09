@@ -154,7 +154,7 @@ export class SecureKeyManager {
       return apiKey;
 
     } catch (error) {
-      console.log(chalk.red('❌ Error in secure key management'));
+      // Silently fail and let the main CLI handle fallback
       throw error;
     }
   }

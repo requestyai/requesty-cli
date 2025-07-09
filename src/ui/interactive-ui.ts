@@ -41,7 +41,7 @@ export class InteractiveUI {
     console.log();
   }
 
-  async showMainMenu(): Promise<'quick' | 'select' | 'pdf-chat' | 'agent-builder' | 'security' | 'exit'> {
+  async showMainMenu(): Promise<'quick' | 'select' | 'compare' | 'pdf-chat' | 'security' | 'exit'> {
     const { action } = await inquirer.prompt([
       {
         type: 'list',
@@ -57,12 +57,12 @@ export class InteractiveUI {
             value: 'select'
           },
           {
-            name: '📄 Chat with PDF',
-            value: 'pdf-chat'
+            name: '⚡ Compare 2 Prompts',
+            value: 'compare'
           },
           {
-            name: '🤖 Agent Builder',
-            value: 'agent-builder'
+            name: '📄 Chat with PDF',
+            value: 'pdf-chat'
           },
           {
             name: '🔒 Security Status',
@@ -158,6 +158,30 @@ export class InteractiveUI {
     ]);
 
     return prompt;
+  }
+
+  async getComparisonPrompts(): Promise<{ prompt1: string; prompt2: string }> {
+    console.log(chalk.yellow('\n📝 Enter two prompts to compare performance:\n'));
+    
+    const { prompt1 } = await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'prompt1',
+        message: '💬 Prompt 1 (Baseline):',
+        validate: (input: string) => input.trim().length > 0 || 'Prompt 1 cannot be empty'
+      }
+    ]);
+
+    const { prompt2 } = await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'prompt2',
+        message: '💬 Prompt 2 (Comparison):',
+        validate: (input: string) => input.trim().length > 0 || 'Prompt 2 cannot be empty'
+      }
+    ]);
+
+    return { prompt1, prompt2 };
   }
 
   async getPDFPath(): Promise<string> {

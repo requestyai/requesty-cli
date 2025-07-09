@@ -10,7 +10,7 @@ export const DEFAULT_MODELS = [
   'alibaba/qwen-max',
   'anthropic/claude-sonnet-4-20250514',
   'google/gemini-2.5-flash',
-  'google/gemini-2.5-pro'
+  'together/deepseek-ai/DeepSeek-V3'
 ];
 
 export const MODEL_PROVIDERS: Record<string, ModelProvider> = {
