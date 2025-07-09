@@ -1,0 +1,100 @@
+import readline from 'readline';
+import chalk from 'chalk';
+import { PDFChatClient } from '../core/pdf-chat';
+import { CLIConfig } from '../core/types';
+
+export class PDFChatUI {
+  private rl: readline.Interface;
+  private client: PDFChatClient;
+
+  constructor(config: CLIConfig) {
+    this.client = new PDFChatClient(config);
+    this.rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+  }
+
+  async startPDFChat(pdfPath: string, model?: string): Promise<void> {
+    try {
+      // Display welcome message
+      this.client.displayWelcome();
+
+      // Initialize PDF chat
+      await this.client.initializePDFChat(pdfPath, model);
+
+      // Display session info
+      this.client.displaySessionInfo();
+
+      // Start interactive loop
+      await this.interactiveLoop();
+
+    } catch (error) {
+      this.client.displayError(error instanceof Error ? error.message : 'Unknown error');
+    } finally {
+      this.rl.close();
+    }
+  }
+
+  private async interactiveLoop(): Promise<void> {
+    return new Promise((resolve) => {
+      const askQuestion = () => {
+        this.rl.question(chalk.yellow('\n💬 You: '), async (input) => {
+          const trimmedInput = input.trim();
+
+          // Check for exit commands
+          if (trimmedInput.toLowerCase() === 'exit' || trimmedInput.toLowerCase() === 'quit') {
+            this.client.displayGoodbye();
+            resolve();
+            return;
+          }
+
+          // Check for empty input
+          if (!trimmedInput) {
+            console.log(chalk.gray('Please enter a message or type "exit" to quit.'));
+            askQuestion();
+            return;
+          }
+
+          // Check for help command
+          if (trimmedInput.toLowerCase() === 'help') {
+            this.displayHelp();
+            askQuestion();
+            return;
+          }
+
+          // Check for session info command
+          if (trimmedInput.toLowerCase() === 'info') {
+            this.client.displaySessionInfo();
+            askQuestion();
+            return;
+          }
+
+          try {
+            // Send message to PDF chat
+            await this.client.sendMessage(trimmedInput);
+            askQuestion();
+          } catch (error) {
+            this.client.displayError(error instanceof Error ? error.message : 'Unknown error');
+            askQuestion();
+          }
+        });
+      };
+
+      askQuestion();
+    });
+  }
+
+  private displayHelp(): void {
+    console.log(chalk.cyan('\n📖 Available Commands:'));
+    console.log(chalk.gray('• Type any message to chat with the PDF'));
+    console.log(chalk.gray('• "info" - Display session information'));
+    console.log(chalk.gray('• "help" - Show this help message'));
+    console.log(chalk.gray('• "exit" or "quit" - End the session'));
+    console.log(chalk.gray('─'.repeat(50)));
+  }
+
+  close(): void {
+    this.rl.close();
+  }
+}

@@ -9,6 +9,7 @@ import { CLIConfig, ChatCompletionRequest, ModelInfo } from '../core/types';
 import { DEFAULT_MODELS } from '../models/models';
 import { KeyManager } from '../utils/key-manager';
 import { PricingCalculator } from '../utils/pricing';
+import { PDFChatUI } from '../ui/pdf-chat-ui';
 
 const DEFAULT_CONFIG: CLIConfig = {
   baseURL: 'https://router.requesty.ai/v1',
