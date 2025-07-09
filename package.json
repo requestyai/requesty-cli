@@ -11,7 +11,8 @@
     "npm": ">=8.0.0"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run copy-config",
+    "copy-config": "mkdir -p dist/config && cp src/config/models.json dist/config/",
     "build:watch": "tsc --watch",
     "start": "node dist/cli/index.js",
     "dev": "ts-node src/cli/index.ts",

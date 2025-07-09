@@ -1,0 +1,54 @@
+{
+  "models": [
+    {
+      "name": "gpt-4o-mini",
+      "provider": "OpenAI",
+      "contextWindow": 128000,
+      "pricing": { "input": 0.15, "output": 0.6 },
+      "supportsStreaming": true,
+      "supportsTools": true,
+      "supportsVision": true,
+      "supportsJson": true
+    },
+    {
+      "name": "gpt-4o",
+      "provider": "OpenAI",
+      "contextWindow": 128000,
+      "pricing": { "input": 2.5, "output": 10 },
+      "supportsStreaming": true,
+      "supportsTools": true,
+      "supportsVision": true,
+      "supportsJson": true
+    },
+    {
+      "name": "claude-3-5-sonnet-20241022",
+      "provider": "Anthropic",
+      "contextWindow": 200000,
+      "pricing": { "input": 3, "output": 15 },
+      "supportsStreaming": true,
+      "supportsTools": true,
+      "supportsVision": true,
+      "supportsJson": true
+    },
+    {
+      "name": "claude-3-5-haiku-20241022",
+      "provider": "Anthropic",
+      "contextWindow": 200000,
+      "pricing": { "input": 1, "output": 5 },
+      "supportsStreaming": true,
+      "supportsTools": true,
+      "supportsVision": true,
+      "supportsJson": true
+    },
+    {
+      "name": "gemini-1.5-flash",
+      "provider": "Google",
+      "contextWindow": 1000000,
+      "pricing": { "input": 0.15, "output": 0.6 },
+      "supportsStreaming": true,
+      "supportsTools": true,
+      "supportsVision": true,
+      "supportsJson": true
+    }
+  ]
+}

@@ -9,10 +9,10 @@ export interface ModelProvider {
 
 export const DEFAULT_MODELS = [
   'openai/gpt-4.1',
-  'alibaba/qwen-max',
   'anthropic/claude-sonnet-4-20250514',
   'google/gemini-2.5-flash',
-  'together/deepseek-ai/DeepSeek-V3'
+  'nebius/deepseek-ai/DeepSeek-V3-0324-fast',
+  'mistral/mistral-large-latest'
 ];
 
 export const MODEL_PROVIDERS: Record<string, ModelProvider> = {
@@ -80,7 +80,7 @@ export const MODEL_PROVIDERS: Record<string, ModelProvider> = {
 
 export function categorizeModels(models: ModelInfo[]): Record<string, ModelProvider> {
   const providers = JSON.parse(JSON.stringify(MODEL_PROVIDERS));
-  
+
   models.forEach(model => {
     const modelId = model.id || model.name || '';
     const provider = modelId.split('/')[0];
@@ -88,7 +88,7 @@ export function categorizeModels(models: ModelInfo[]): Record<string, ModelProvi
       providers[provider].models.push(modelId);
     }
   });
-  
+
   return providers;
 }
 

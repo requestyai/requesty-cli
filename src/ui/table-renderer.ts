@@ -22,7 +22,7 @@ export class TableRenderer {
     this.table = new Table({
       head: headers,
       style: { head: ['cyan'] },
-      colWidths: isStreaming ? [25, 12, 12, 12, 12] : [25, 12, 12, 12, 12, 12, 12, 12, 12]
+      colWidths: isStreaming ? [25, 40, 12, 12, 12] : [25, 40, 12, 12, 12, 12, 12, 12, 12]
     });
   }
 
@@ -66,7 +66,16 @@ export class TableRenderer {
   private buildTableRows(results: Map<string, ModelResult>): void {
     Array.from(results.values()).forEach(result => {
       const statusIcon = this.getStatusIcon(result.status);
-      const statusText = `${statusIcon} ${result.status || 'unknown'}`;
+      let statusText = `${statusIcon} ${result.status || 'unknown'}`;
+      
+      // Add error message for failed requests
+      if (result.status === 'failed' && result.error) {
+        // Show more of the error message, and only truncate if it's really long
+        const errorMessage = result.error.length > 100 ? 
+          result.error.substring(0, 100) + '...' : 
+          result.error;
+        statusText = `${statusIcon} ${errorMessage}`;
+      }
 
       if (this.isStreaming) {
         this.table.push([

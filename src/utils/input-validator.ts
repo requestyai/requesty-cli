@@ -16,9 +16,9 @@ export class InputValidator {
     .required();
 
   private static readonly apiKeySchema = Joi.string()
-    .min(20)
-    .max(256)
-    .pattern(/^[a-zA-Z0-9\-_.]+$/)
+    .min(8)
+    .max(512)
+    .pattern(/^[a-zA-Z0-9\-_.\+\/\=]+$/)
     .required();
 
   private static readonly modelNameSchema = Joi.string()
@@ -70,17 +70,26 @@ export class InputValidator {
    */
   static validateApiKey(apiKey: string): string {
     try {
-      const { error, value } = this.apiKeySchema.validate(apiKey);
-      if (error) {
-        ErrorHandler.handleValidationError(error, 'apiKey', '[REDACTED]');
+      // Skip validation for placeholder key
+      if (apiKey === '<REQUESTY_API_KEY>') {
+        return apiKey;
       }
 
-      // Check for common patterns that indicate fake or test keys
-      if (this.isTestApiKey(value)) {
-        throw new Error('Test or placeholder API key detected');
+      // Basic validation - just check it's not empty and reasonable length
+      if (!apiKey || apiKey.trim().length < 8) {
+        throw new Error('API key must be at least 8 characters long');
       }
 
-      return value;
+      if (apiKey.length > 512) {
+        throw new Error('API key is too long (max 512 characters)');
+      }
+
+      // Only check for obviously fake keys
+      if (this.isObviouslyFakeKey(apiKey)) {
+        throw new Error('Please provide a valid API key');
+      }
+
+      return apiKey.trim();
     } catch (error) {
       ErrorHandler.handleValidationError(error, 'apiKey', '[REDACTED]');
     }
@@ -238,22 +247,23 @@ export class InputValidator {
   }
 
   /**
-   * Check if API key is a test or placeholder key
+   * Check if API key is obviously fake
    * @param apiKey - API key to check
-   * @returns True if test key
+   * @returns True if obviously fake
    */
-  private static isTestApiKey(apiKey: string): boolean {
-    const testPatterns = [
-      /^test[_-]?/i,
-      /^demo[_-]?/i,
-      /^sample[_-]?/i,
-      /^placeholder/i,
-      /^your[_-]?api[_-]?key/i,
-      /^sk-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i, // Common test pattern
-      /^[0-9a-f]{32}$/i // Simple hex test pattern
+  private static isObviouslyFakeKey(apiKey: string): boolean {
+    const fakePatterns = [
+      /^test$/i,
+      /^demo$/i,
+      /^sample$/i,
+      /^placeholder$/i,
+      /^your[_-]?api[_-]?key$/i,
+      /^123+$/,
+      /^abc+$/i,
+      /^xxx+$/i
     ];
 
-    return testPatterns.some(pattern => pattern.test(apiKey));
+    return fakePatterns.some(pattern => pattern.test(apiKey));
   }
 
   /**

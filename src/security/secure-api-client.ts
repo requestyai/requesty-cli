@@ -1,11 +1,10 @@
-import OpenAI from 'openai';
-import * as https from 'https';
 import * as crypto from 'crypto';
-import { SecureKeyManager } from './secure-key-manager';
-import { CryptoManager } from './crypto-manager';
+import * as https from 'https';
+import OpenAI from 'openai';
 import { ErrorHandler } from '../utils/error-handler';
 import { InputValidator } from '../utils/input-validator';
 import { PerformanceMonitor } from '../utils/performance-monitor';
+import { SecureKeyManager } from './secure-key-manager';
 
 /**
  * Ultra-secure API client with advanced security features
@@ -17,13 +16,20 @@ export class SecureApiClient {
   private static readonly MAX_RETRIES = 3;
   private static readonly RETRY_DELAY = 1000;
 
-  constructor(baseURL: string, timeout: number = SecureApiClient.REQUEST_TIMEOUT) {
+  constructor(
+    baseURL: string,
+    timeout: number = SecureApiClient.REQUEST_TIMEOUT
+  ) {
     // Validate inputs
     const validatedBaseURL = InputValidator.validateUrl(baseURL);
-    const validatedTimeout = InputValidator.validateNumber(timeout, 1000, 60000);
-    
+    const validatedTimeout = InputValidator.validateNumber(
+      timeout,
+      1000,
+      60000
+    );
+
     this.keyManager = new SecureKeyManager();
-    
+
     // Create secure HTTPS agent
     const httpsAgent = new https.Agent({
       keepAlive: true,
@@ -38,13 +44,14 @@ export class SecureApiClient {
         'ECDHE-RSA-AES256-GCM-SHA384',
         'ECDHE-RSA-AES128-GCM-SHA256',
         'ECDHE-RSA-AES256-SHA384',
-        'ECDHE-RSA-AES128-SHA256'
+        'ECDHE-RSA-AES128-SHA256',
       ].join(':'),
       // Security options
-      secureOptions: crypto.constants.SSL_OP_NO_SSLv2 | 
-                    crypto.constants.SSL_OP_NO_SSLv3 |
-                    crypto.constants.SSL_OP_NO_TLSv1 |
-                    crypto.constants.SSL_OP_NO_TLSv1_1
+      secureOptions:
+        crypto.constants.SSL_OP_NO_SSLv2 |
+        crypto.constants.SSL_OP_NO_SSLv3 |
+        crypto.constants.SSL_OP_NO_TLSv1 |
+        crypto.constants.SSL_OP_NO_TLSv1_1,
     });
 
     this.openai = new OpenAI({
@@ -55,8 +62,8 @@ export class SecureApiClient {
       defaultHeaders: {
         'User-Agent': 'requesty-cli/2.0.0-secure',
         'X-Client-Version': '2.0.0',
-        'X-Security-Level': 'high'
-      }
+        'X-Security-Level': 'high',
+      },
     });
   }
 
@@ -64,34 +71,36 @@ export class SecureApiClient {
    * Initialize secure API client with authenticated key
    */
   async initialize(): Promise<void> {
-    return PerformanceMonitor.measureAsync(
-      async () => {
-        try {
-          const apiKey = await this.keyManager.getApiKey();
-          
-          // Validate API key
-          const validatedApiKey = InputValidator.validateApiKey(apiKey);
-          
-          // Create new client instance with secure headers
-          const secureHeaders = this.keyManager.createSecureHeaders(validatedApiKey);
-          
-          this.openai = new OpenAI({
-            baseURL: this.openai.baseURL,
-            apiKey: validatedApiKey,
-            timeout: this.openai.timeout,
-            defaultHeaders: {
-              'User-Agent': 'requesty-cli/2.0.0-secure',
-              'X-Client-Version': '2.0.0',
-              'X-Security-Level': 'high',
-              ...secureHeaders
-            }
-          });
-        } catch (error) {
-          ErrorHandler.handleSecurityError(error, 'API client initialization', true);
-        }
-      },
-      'secure-api-client-init'
-    ).then(result => result.result);
+    return PerformanceMonitor.measureAsync(async () => {
+      try {
+        const apiKey = await this.keyManager.getApiKey();
+
+        // Validate API key
+        const validatedApiKey = InputValidator.validateApiKey(apiKey);
+
+        // Create new client instance with secure headers
+        const secureHeaders =
+          this.keyManager.createSecureHeaders(validatedApiKey);
+
+        this.openai = new OpenAI({
+          baseURL: this.openai.baseURL,
+          apiKey: validatedApiKey,
+          timeout: this.openai.timeout,
+          defaultHeaders: {
+            'User-Agent': 'requesty-cli/2.0.0-secure',
+            'X-Client-Version': '2.0.0',
+            'X-Security-Level': 'high',
+            ...secureHeaders,
+          },
+        });
+      } catch (error) {
+        ErrorHandler.handleSecurityError(
+          error,
+          'API client initialization',
+          true
+        );
+      }
+    }, 'secure-api-client-init').then((result) => result.result);
   }
 
   /**
@@ -102,67 +111,77 @@ export class SecureApiClient {
     retries: number = SecureApiClient.MAX_RETRIES,
     operationName: string = 'secure-api-request'
   ): Promise<T> {
-    return PerformanceMonitor.measureAsync(
-      async () => {
-        for (let attempt = 1; attempt <= retries; attempt++) {
-          try {
-            const result = await requestFn();
-            
-            // Log successful request (without sensitive data)
-            console.debug(`✅ Secure API request completed`);
-            
-            return result;
-            
-          } catch (error) {
-            const isLastAttempt = attempt === retries;
-            
-            if (error instanceof Error) {
-              // Handle specific error types
-              if (error.message.includes('401') || error.message.includes('403')) {
-                // Authentication error - don't retry
-                ErrorHandler.handleSecurityError(error, 'API authentication', true);
-              }
-              
-              if (error.message.includes('429')) {
-                // Rate limit - wait longer before retry
-                if (!isLastAttempt) {
-                  await this.delay(SecureApiClient.RETRY_DELAY * attempt * 2);
-                  continue;
-                }
-              }
-              
-              if (error.message.includes('timeout')) {
-                // Timeout error
-                if (!isLastAttempt) {
-                  await this.delay(SecureApiClient.RETRY_DELAY * attempt);
-                  continue;
-                }
+    return PerformanceMonitor.measureAsync(async () => {
+      for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+          const result = await requestFn();
+
+          // Log successful request (without sensitive data)
+          console.debug(`✅ Secure API request completed`);
+
+          return result;
+        } catch (error) {
+          const isLastAttempt = attempt === retries;
+
+          if (error instanceof Error) {
+            // Handle specific error types
+            if (
+              error.message.includes('401') ||
+              error.message.includes('403')
+            ) {
+              // Authentication error - don't retry
+              ErrorHandler.handleSecurityError(
+                error,
+                'API authentication',
+                true
+              );
+            }
+
+            if (error.message.includes('429')) {
+              // Rate limit - wait longer before retry
+              if (!isLastAttempt) {
+                await this.delay(SecureApiClient.RETRY_DELAY * attempt * 2);
+                continue;
               }
             }
-            
-            if (isLastAttempt) {
-              ErrorHandler.handleApiError(error, `Secure API request (${operationName}) after ${retries} attempts`);
+
+            if (error.message.includes('timeout')) {
+              // Timeout error
+              if (!isLastAttempt) {
+                await this.delay(SecureApiClient.RETRY_DELAY * attempt);
+                continue;
+              }
             }
-            
-            // Wait before retry
-            await this.delay(SecureApiClient.RETRY_DELAY * attempt);
           }
+
+          if (isLastAttempt) {
+            ErrorHandler.handleApiError(
+              error,
+              `Secure API request (${operationName}) after ${retries} attempts`
+            );
+          }
+
+          // Wait before retry
+          await this.delay(SecureApiClient.RETRY_DELAY * attempt);
         }
-        
-        throw new Error('Max retries exceeded');
-      },
-      operationName
-    ).then(result => result.result);
+      }
+
+      throw new Error('Max retries exceeded');
+    }, operationName).then((result) => result.result);
   }
 
   /**
    * Secure models list request
    */
   async getModels(): Promise<any[]> {
-    return this.secureRequest(async () => {
-      const response = await this.openai.models.list();
-      return response.data;
-    }, SecureApiClient.MAX_RETRIES, 'get-models');
+    return this.secureRequest(
+      async () => {
+        const response = await this.openai.models.list();
+        return response.data;
+      },
+      SecureApiClient.MAX_RETRIES,
+      'get-models'
+    );
   }
 
   /**
@@ -173,31 +192,35 @@ export class SecureApiClient {
     messages: any[];
     temperature?: number;
     stream?: boolean;
-    max_tokens?: number;
   }): Promise<any> {
-    return this.secureRequest(async () => {
-      // Validate and sanitize parameters
-      const validatedModel = InputValidator.validateModelName(params.model);
-      const validatedTemperature = params.temperature ? InputValidator.validateNumber(params.temperature, 0, 2) : 0.7;
-      const validatedMaxTokens = params.max_tokens ? InputValidator.validateNumber(params.max_tokens, 1, 8192) : undefined;
-      
-      // Validate messages array
-      if (!Array.isArray(params.messages) || params.messages.length === 0) {
-        throw new Error('Messages must be a non-empty array');
-      }
-      
-      // Sanitize parameters
-      const sanitizedParams = {
-        model: validatedModel,
-        messages: params.messages,
-        temperature: validatedTemperature,
-        stream: params.stream || false,
-        max_tokens: validatedMaxTokens
-      };
+    return this.secureRequest(
+      async () => {
+        // Validate and sanitize parameters
+        const validatedModel = InputValidator.validateModelName(params.model);
+        const validatedTemperature = params.temperature
+          ? InputValidator.validateNumber(params.temperature, 0, 2)
+          : 0.7;
 
-      const response = await this.openai.chat.completions.create(sanitizedParams);
-      return response;
-    }, SecureApiClient.MAX_RETRIES, 'chat-completion');
+        // Validate messages array
+        if (!Array.isArray(params.messages) || params.messages.length === 0) {
+          throw new Error('Messages must be a non-empty array');
+        }
+
+        // Sanitize parameters
+        const sanitizedParams = {
+          model: validatedModel,
+          messages: params.messages,
+          temperature: validatedTemperature,
+          stream: params.stream || false,
+        };
+
+        const response =
+          await this.openai.chat.completions.create(sanitizedParams);
+        return response;
+      },
+      SecureApiClient.MAX_RETRIES,
+      'chat-completion'
+    );
   }
 
   /**
@@ -209,46 +232,52 @@ export class SecureApiClient {
     temperature?: number;
     max_tokens?: number;
   }): Promise<AsyncIterable<any>> {
-    return this.secureRequest(async () => {
-      // Validate and sanitize parameters
-      const validatedModel = InputValidator.validateModelName(params.model);
-      const validatedTemperature = params.temperature ? InputValidator.validateNumber(params.temperature, 0, 2) : 0.7;
-      const validatedMaxTokens = params.max_tokens ? InputValidator.validateNumber(params.max_tokens, 1, 8192) : undefined;
-      
-      // Validate messages array
-      if (!Array.isArray(params.messages) || params.messages.length === 0) {
-        throw new Error('Messages must be a non-empty array');
-      }
-      
-      const sanitizedParams = {
-        model: validatedModel,
-        messages: params.messages,
-        temperature: validatedTemperature,
-        stream: true,
-        max_tokens: validatedMaxTokens
-      };
+    return this.secureRequest(
+      async () => {
+        // Validate and sanitize parameters
+        const validatedModel = InputValidator.validateModelName(params.model);
+        const validatedTemperature = params.temperature
+          ? InputValidator.validateNumber(params.temperature, 0, 2)
+          : 0.7;
+        const validatedMaxTokens = params.max_tokens
+          ? InputValidator.validateNumber(params.max_tokens, 1, 8192)
+          : undefined;
 
-      const stream = await this.openai.chat.completions.create(sanitizedParams);
-      return stream as AsyncIterable<any>;
-    }, SecureApiClient.MAX_RETRIES, 'streaming-chat-completion');
+        // Validate messages array
+        if (!Array.isArray(params.messages) || params.messages.length === 0) {
+          throw new Error('Messages must be a non-empty array');
+        }
+
+        const sanitizedParams = {
+          model: validatedModel,
+          messages: params.messages,
+          temperature: validatedTemperature,
+          stream: true,
+          max_tokens: validatedMaxTokens,
+        };
+
+        const stream =
+          await this.openai.chat.completions.create(sanitizedParams);
+        return stream as AsyncIterable<any>;
+      },
+      SecureApiClient.MAX_RETRIES,
+      'streaming-chat-completion'
+    );
   }
 
   /**
    * Validate API key without exposing it
    */
   async validateApiKey(): Promise<boolean> {
-    return PerformanceMonitor.measureAsync(
-      async () => {
-        try {
-          await this.getModels();
-          return true;
-        } catch (error) {
-          // Don't expose validation errors - just return false
-          return false;
-        }
-      },
-      'validate-api-key'
-    ).then(result => result.result);
+    return PerformanceMonitor.measureAsync(async () => {
+      try {
+        await this.getModels();
+        return true;
+      } catch (error) {
+        // Don't expose validation errors - just return false
+        return false;
+      }
+    }, 'validate-api-key').then((result) => result.result);
   }
 
   /**
@@ -257,7 +286,7 @@ export class SecureApiClient {
   cleanup(): void {
     // Clear sensitive data
     SecureKeyManager.secureCleanup();
-    
+
     // Clear OpenAI instance
     this.openai = null as any;
   }
@@ -266,7 +295,7 @@ export class SecureApiClient {
    * Delay utility for retries
    */
   private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   /**
@@ -282,7 +311,7 @@ export class SecureApiClient {
       keyStoreExists: this.keyManager.hasStoredKey() as any,
       keyStoreValid: this.keyManager.validateKeyStore() as any,
       tlsVersion: 'TLS 1.2+',
-      encryptionLevel: 'AES-256-CBC'
+      encryptionLevel: 'AES-256-CBC',
     };
   }
 
@@ -297,7 +326,7 @@ export class SecureApiClient {
       encryption: 'AES-256-CBC',
       keyDerivation: 'PBKDF2-SHA256',
       tlsVersion: 'TLS 1.2+',
-      keyStore: this.keyManager.getKeyStoreInfo()
+      keyStore: this.keyManager.getKeyStoreInfo(),
     };
   }
 }
