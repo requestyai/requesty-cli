@@ -1,14 +1,25 @@
 #!/usr/bin/env node
 
+// External dependencies
 import { Command } from 'commander';
+
+// Core components
 import { RequestyAPI } from '../core/api';
-import { InteractiveUI } from '../ui/interactive-ui';
 import { StreamingClient } from '../core/streaming';
-import { DynamicResultsTable } from '../ui/dynamic-table';
 import { CLIConfig, ChatCompletionRequest, ModelInfo } from '../core/types';
-import { DEFAULT_MODELS } from '../models/models';
+
+// UI components
+import { InteractiveUI } from '../ui/interactive-ui';
+import { DynamicResultsTable } from '../ui/dynamic-table';
+
+// Utilities
 import { KeyManager } from '../utils/key-manager';
 import { PricingCalculator } from '../utils/pricing';
+
+// Models and data
+import { DEFAULT_MODELS } from '../models/models';
+
+// PDF chat functionality
 import { PDFChatInterface } from '../pdf-chat/ui/chat-interface';
 import { PDFChatConfig } from '../pdf-chat/types/chat-types';
 
@@ -36,17 +47,8 @@ class RequestyCLI {
 
   async run() {
     try {
-      // Get API key if not provided
-      if (!this.config.apiKey) {
-        // For debugging - use a temporary key
-        this.config.apiKey = process.env.REQUESTY_API_KEY || '<REQUESTY_API_KEY>';
-        if (this.config.apiKey === '<REQUESTY_API_KEY>') {
-          this.config.apiKey = await this.keyManager.getApiKey();
-        }
-        // Update API instances with the key
-        this.api = new RequestyAPI(this.config);
-        this.streaming = new StreamingClient(this.config);
-      }
+      // Ensure API key is available
+      await this.ensureApiKey();
 
       // Load available models
       this.models = await this.api.getModels();
@@ -100,29 +102,38 @@ class RequestyCLI {
     await this.testModels(selectedModels, prompt, useStreaming);
   }
 
-  private async runPDFChat() {
+  private async runPDFChat(): Promise<void> {
     try {
-      // Ensure API key is set
-      if (!this.config.apiKey || this.config.apiKey === '<REQUESTY_API_KEY>') {
-        this.config.apiKey = await this.keyManager.getApiKey();
-      }
+      await this.ensureApiKey();
       
       const pdfPath = await this.ui.getPDFPath();
       const model = await this.ui.getPDFModel();
       
-      // Create PDF chat configuration
-      const pdfChatConfig: PDFChatConfig = {
-        model,
-        temperature: this.config.temperature,
-        includeSystemPrompt: true,
-        conversationHistory: true
-      };
-      
+      const pdfChatConfig = this.createPDFChatConfig(model);
       const pdfChatInterface = new PDFChatInterface(this.config, pdfChatConfig);
+      
       await pdfChatInterface.start(pdfPath);
     } catch (error) {
       this.ui.showError(error instanceof Error ? error.message : 'Failed to start PDF chat');
     }
+  }
+
+  private async ensureApiKey(): Promise<void> {
+    if (!this.config.apiKey || this.config.apiKey === '<REQUESTY_API_KEY>') {
+      this.config.apiKey = await this.keyManager.getApiKey();
+      // Update API instances with the new key
+      this.api = new RequestyAPI(this.config);
+      this.streaming = new StreamingClient(this.config);
+    }
+  }
+
+  private createPDFChatConfig(model: string): PDFChatConfig {
+    return {
+      model,
+      temperature: this.config.temperature,
+      includeSystemPrompt: true,
+      conversationHistory: true
+    };
   }
 
   private async testModels(models: string[], prompt: string, useStreaming: boolean) {
@@ -269,7 +280,17 @@ class RequestyCLI {
   }
 }
 
-async function main() {
+// Helper function to create PDF chat configuration
+function createPDFChatConfig(model: string, temperature: number): PDFChatConfig {
+  return {
+    model,
+    temperature,
+    includeSystemPrompt: true,
+    conversationHistory: true
+  };
+}
+
+async function main(): Promise<void> {
   const program = new Command();
   
   program
@@ -294,15 +315,10 @@ async function main() {
         temperature: parseFloat(options.temperature)
       };
 
-      // Create PDF chat configuration
-      const pdfChatConfig: PDFChatConfig = {
-        model: options.model,
-        temperature: parseFloat(options.temperature),
-        includeSystemPrompt: true,
-        conversationHistory: true
-      };
-      
+      // Create PDF chat configuration and interface
+      const pdfChatConfig = createPDFChatConfig(options.model, parseFloat(options.temperature));
       const pdfChatInterface = new PDFChatInterface(config, pdfChatConfig);
+      
       await pdfChatInterface.start(pdfPath);
     });
 

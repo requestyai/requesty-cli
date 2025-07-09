@@ -1,6 +1,10 @@
 import chalk from 'chalk';
 
+/**
+ * Centralized console formatting utilities for consistent styling
+ */
 export class ConsoleFormatter {
+  // Text styles
   static header(text: string): string {
     return chalk.bold.cyan(text);
   }

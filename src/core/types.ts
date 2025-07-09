@@ -3,16 +3,22 @@ export interface ModelInfo {
   object: string;
   created: number;
   owned_by: string;
-  input_price?: number; // Price per token for input
-  caching_price?: number; // Price per token for caching
-  cached_price?: number; // Price per token for cached input
-  output_price?: number; // Price per token for output
+  
+  // Pricing information
+  input_price?: number;
+  caching_price?: number;
+  cached_price?: number;
+  output_price?: number;
+  
+  // Model capabilities
   max_output_tokens?: number;
   context_window?: number;
   supports_caching?: boolean;
   supports_vision?: boolean;
   supports_computer_use?: boolean;
   supports_reasoning?: boolean;
+  
+  // Additional metadata
   description?: string;
 }
 
@@ -52,18 +58,22 @@ export interface ModelResult {
   model: string;
   success?: boolean;
   response?: ChatCompletionResponse | string;
-  rawResponse?: any; // The actual raw JSON response from the API
+  rawResponse?: any;
   error?: string;
   duration?: number;
   status?: 'pending' | 'running' | 'completed' | 'failed';
+  
+  // Token metrics
   inputTokens?: number;
   outputTokens?: number;
   totalTokens?: number;
   reasoningTokens?: number;
   tokensPerSecond?: number;
-  actualCost?: number; // Actual cost of the request in dollars
-  blendedCostPerMillion?: number; // Blended cost per million tokens
-  modelInfo?: ModelInfo; // Model pricing info
+  
+  // Cost metrics
+  actualCost?: number;
+  blendedCostPerMillion?: number;
+  modelInfo?: ModelInfo;
 }
 
 export interface CLIConfig {
