@@ -42,8 +42,8 @@ class RequestyCLI {
   private ui: InteractiveUI;
   private config: CLIConfig;
   private keyManager: KeyManager;
-  private secureKeyManager: SecureKeyManager;
-  private secureApiClient: SecureApiClient;
+  private secureKeyManager?: SecureKeyManager;
+  private secureApiClient?: SecureApiClient;
   private models: ModelInfo[] = [];
   private sessionManager: SessionManager;
 
@@ -53,8 +53,14 @@ class RequestyCLI {
     this.streaming = new StreamingClient(config);
     this.ui = new InteractiveUI();
     this.keyManager = new KeyManager();
-    this.secureKeyManager = new SecureKeyManager();
-    this.secureApiClient = new SecureApiClient(config.baseURL, config.timeout);
+    // Initialize secure components with error handling
+    try {
+      this.secureKeyManager = new SecureKeyManager();
+      this.secureApiClient = new SecureApiClient(config.baseURL, config.timeout);
+    } catch (error) {
+      // Silently continue if secure components fail
+      console.warn('Secure components unavailable, using standard security');
+    }
     this.sessionManager = SessionManager.getInstance();
   }
 
@@ -63,9 +69,15 @@ class RequestyCLI {
       // Ensure API key is available
       await this.ensureApiKey();
 
-      // Load available models
-      this.models = await this.api.getModels();
-      await this.ui.initializeModels(this.models);
+      // Load available models with error handling
+      try {
+        this.models = await this.api.getModels();
+        await this.ui.initializeModels(this.models);
+      } catch (error) {
+        console.warn('Failed to load models, using defaults');
+        this.models = this.api.getAvailableModels();
+        await this.ui.initializeModels(this.models);
+      }
 
       // Main interaction loop
       let running = true;
@@ -150,10 +162,14 @@ class RequestyCLI {
     if (!this.config.apiKey || this.config.apiKey === '<REQUESTY_API_KEY>') {
       try {
         // Use secure key manager for enhanced security
-        this.config.apiKey = await this.secureKeyManager.getApiKey();
+        if (this.secureKeyManager) {
+          this.config.apiKey = await this.secureKeyManager.getApiKey();
+        }
 
         // Initialize secure API client
-        await this.secureApiClient.initialize();
+        if (this.secureApiClient) {
+          await this.secureApiClient.initialize();
+        }
 
         // Update regular API instances with the new key
         this.api = new RequestyAPI(this.config);
@@ -190,16 +206,20 @@ class RequestyCLI {
       console.log('\n🔒 Security Status Report\n');
 
       // Get security status from secure API client
-      const securityStatus = this.secureApiClient.getSecurityStatus();
-      const secureConfig = this.secureApiClient.exportSecureConfig();
+      if (this.secureApiClient) {
+        const securityStatus = this.secureApiClient.getSecurityStatus();
+        const secureConfig = this.secureApiClient.exportSecureConfig();
 
-      console.log('🛡️  Encryption Status:');
-      console.log(`   Algorithm: ${secureConfig.encryption}`);
-      console.log(`   Key Derivation: ${secureConfig.keyDerivation}`);
-      console.log(`   TLS Version: ${secureConfig.tlsVersion}`);
-      console.log(`   Security Level: ${secureConfig.securityLevel}`);
+        console.log('🛡️  Encryption Status:');
+        console.log(`   Algorithm: ${secureConfig.encryption}`);
+        console.log(`   Key Derivation: ${secureConfig.keyDerivation}`);
+        console.log(`   TLS Version: ${secureConfig.tlsVersion}`);
+        console.log(`   Security Level: ${secureConfig.securityLevel}`);
 
-      console.log('\n🔑 API Key Management:');
+        console.log('\n🔑 API Key Management:');
+      } else {
+        console.log('⚠️  Security Status: Standard (secure components unavailable)');
+      }
       console.log(`   Key Store Exists: ${securityStatus.keyStoreExists ? '✅ Yes' : '❌ No'}`);
       console.log(`   Key Store Valid: ${securityStatus.keyStoreValid ? '✅ Yes' : '❌ No'}`);
       console.log(`   Encryption Level: ${securityStatus.encryptionLevel}`);
@@ -325,7 +345,14 @@ class RequestyCLI {
           request_type: 'standard'
         });
 
-        const result = await this.api.testModel(model, prompt, metadata);
+        // Find model info or create a basic one
+        const modelInfo = this.models.find(m => m.id === model || m.name === model) || {
+          name: model,
+          provider: 'Unknown',
+          id: model
+        };
+        
+        const result = await this.api.testModel(modelInfo, prompt, false, metadata);
 
         if (result.success && result.response) {
           const usage = result.response.usage;

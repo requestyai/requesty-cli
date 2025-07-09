@@ -122,7 +122,8 @@ export class CacheManager {
       this.set(key, value, ttl);
       return value;
     } catch (error) {
-      ErrorHandler.handleApiError(error, 'Cache getOrSet operation');
+      console.warn(`Cache error for key ${key}, executing factory directly`);
+      return await factory();
     }
   }
 

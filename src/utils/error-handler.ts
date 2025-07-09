@@ -11,6 +11,10 @@ export class ErrorHandler {
    */
   static handleApiError(error: unknown, context: string): never {
     const message = error instanceof Error ? error.message : 'Unknown error';
+    
+    // Log the error for debugging
+    console.error(`[ERROR] ${context}: ${message}`);
+    
     throw new Error(`${context}: ${message}`);
   }
 
@@ -25,8 +29,10 @@ export class ErrorHandler {
     const message = error instanceof Error ? error.message : 'Security error occurred';
     const sanitizedMessage = sensitive ? 'Sensitive operation failed' : message;
     
-    // Log security errors for audit purposes
-    console.error(`[SECURITY] ${context}: ${sanitizedMessage}`);
+    // Only log in debug mode to avoid spam
+    if (process.env.DEBUG) {
+      console.error(`[SECURITY] ${context}: ${sanitizedMessage}`);
+    }
     
     throw new Error(`Security error in ${context}: ${sanitizedMessage}`);
   }

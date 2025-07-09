@@ -95,9 +95,16 @@ export class QuickStartCommand extends BaseCommand {
       'gemini-1.5-flash'
     ];
 
-    return defaultModels
+    const models = defaultModels
       .map(name => this.api.getModelByName(name))
-      .filter(model => model !== null);
+      .filter((model): model is ModelInfo => model !== null);
+    
+    // If no models found, use defaults
+    if (models.length === 0) {
+      return this.api.getAvailableModels().slice(0, 5);
+    }
+    
+    return models;
   }
 
   /**

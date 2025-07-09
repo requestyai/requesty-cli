@@ -1,22 +1,35 @@
 export interface ModelInfo {
-  id: string;
-  object: string;
-  created: number;
-  owned_by: string;
+  id?: string;
+  object?: string;
+  created?: number;
+  owned_by?: string;
+  
+  // Standard model info
+  name: string;
+  provider: string;
   
   // Pricing information
   input_price?: number;
   caching_price?: number;
   cached_price?: number;
   output_price?: number;
+  pricing?: {
+    input: number;
+    output: number;
+  };
   
   // Model capabilities
   max_output_tokens?: number;
   context_window?: number;
+  contextWindow?: number;
   supports_caching?: boolean;
   supports_vision?: boolean;
   supports_computer_use?: boolean;
   supports_reasoning?: boolean;
+  supportsStreaming?: boolean;
+  supportsTools?: boolean;
+  supportsVision?: boolean;
+  supportsJson?: boolean;
   
   // Additional metadata
   description?: string;

@@ -1,3 +1,5 @@
+import { ModelInfo } from '../core/types';
+
 export interface ModelProvider {
   name: string;
   displayName: string;
@@ -76,13 +78,14 @@ export const MODEL_PROVIDERS: Record<string, ModelProvider> = {
   }
 };
 
-export function categorizeModels(models: { id: string }[]): Record<string, ModelProvider> {
+export function categorizeModels(models: ModelInfo[]): Record<string, ModelProvider> {
   const providers = JSON.parse(JSON.stringify(MODEL_PROVIDERS));
   
   models.forEach(model => {
-    const provider = model.id.split('/')[0];
+    const modelId = model.id || model.name || '';
+    const provider = modelId.split('/')[0];
     if (providers[provider]) {
-      providers[provider].models.push(model.id);
+      providers[provider].models.push(modelId);
     }
   });
   

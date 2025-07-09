@@ -46,7 +46,8 @@ export class ConnectionPool {
       
       return client;
     } catch (error) {
-      ErrorHandler.handleApiError(error, 'Connection pool client creation');
+      console.warn('Connection pool error, creating direct client');
+      return OpenAIClientFactory.create(config);
     }
   }
 

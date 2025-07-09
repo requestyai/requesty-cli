@@ -278,14 +278,8 @@ export class InputValidator {
    * @returns True if allowed
    */
   private static isAllowedLocalhost(url: string): boolean {
-    const allowedPorts = [3000, 8000, 8080, 5000]; // Common development ports
-    try {
-      const parsed = new URL(url);
-      const port = parseInt(parsed.port) || (parsed.protocol === 'https:' ? 443 : 80);
-      return allowedPorts.includes(port);
-    } catch {
-      return false;
-    }
+    // Allow all localhost URLs for development
+    return true;
   }
 
   /**

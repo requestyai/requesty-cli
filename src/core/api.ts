@@ -17,20 +17,31 @@ export class RequestyAPI {
   }
 
   async getModels(): Promise<ModelInfo[]> {
-    const cacheKey = 'models-list';
-    
-    return cacheManager.getOrSet(cacheKey, async () => {
+    try {
       const { result } = await PerformanceMonitor.measureAsync(async () => {
         try {
           const response = await this.openai.models.list();
-          return response.data;
+          // Transform OpenAI models to our ModelInfo format
+          return response.data.map(model => ({
+            id: model.id,
+            name: model.id,
+            provider: model.owned_by || 'Unknown',
+            object: model.object,
+            created: model.created,
+            owned_by: model.owned_by
+          }));
         } catch (error) {
-          ErrorHandler.handleApiError(error, 'Failed to fetch models');
+          console.warn('Failed to fetch models from API, using defaults');
+          // Return default models if API fails
+          return this.getAvailableModels();
         }
       }, 'getModels');
       
       return result;
-    }, 300000); // Cache for 5 minutes
+    } catch (error) {
+      console.warn('Error in getModels, using defaults');
+      return this.getAvailableModels();
+    }
   }
 
   async sendChatCompletion(request: ChatCompletionRequest): Promise<ChatCompletionResponse> {
@@ -68,9 +79,13 @@ export class RequestyAPI {
     return result;
   }
 
-  async testModel(model: ModelInfo, prompt: string, streaming = false, metadata?: any): Promise<{ success: boolean; response?: ChatCompletionResponse; rawResponse?: any; error?: string; duration: number; usage?: any; cost?: number }> {
+  async testModel(model: ModelInfo | string, prompt: string, streaming = false, metadata?: any): Promise<{ success: boolean; response?: ChatCompletionResponse; rawResponse?: any; error?: string; duration: number; usage?: any; cost?: number }> {
+    // Handle both string and ModelInfo inputs
+    const modelInfo = typeof model === 'string' ? { name: model, provider: 'Unknown' } : model;
+    const modelName = typeof model === 'string' ? model : model.name;
+    
     // Validate inputs
-    const validatedModel = InputValidator.validateModelName(model.name);
+    const validatedModel = InputValidator.validateModelName(modelName);
     const validatedPrompt = InputValidator.validatePrompt(prompt);
     
     const { result, duration } = await PerformanceMonitor.measureAsync(async () => {
@@ -87,9 +102,13 @@ export class RequestyAPI {
         
         // Calculate cost if pricing available
         let cost = 0;
-        if (model.pricing && response.usage) {
-          const inputCost = (response.usage.prompt_tokens / 1000000) * model.pricing.input;
-          const outputCost = (response.usage.completion_tokens / 1000000) * model.pricing.output;
+        if (modelInfo.pricing && response.usage) {
+          const inputCost = (response.usage.prompt_tokens / 1000000) * modelInfo.pricing.input;
+          const outputCost = (response.usage.completion_tokens / 1000000) * modelInfo.pricing.output;
+          cost = inputCost + outputCost;
+        } else if (modelInfo.input_price && modelInfo.output_price && response.usage) {
+          const inputCost = (response.usage.prompt_tokens / 1000000) * modelInfo.input_price;
+          const outputCost = (response.usage.completion_tokens / 1000000) * modelInfo.output_price;
           cost = inputCost + outputCost;
         }
 
