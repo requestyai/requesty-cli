@@ -26,6 +26,9 @@ import { DEFAULT_MODELS } from '../models/models';
 import { PDFChatInterface } from '../pdf-chat/ui/chat-interface';
 import { PDFChatConfig } from '../pdf-chat/types/chat-types';
 
+// Agent builder functionality
+import { AgentBuilderUI } from '../agent-builder/ui/agent-builder-ui';
+
 const DEFAULT_CONFIG: CLIConfig = {
   baseURL: 'https://router.requesty.ai/v1',
   timeout: 60000,
@@ -40,6 +43,7 @@ class RequestyCLI {
   private keyManager: KeyManager;
   private secureKeyManager: SecureKeyManager;
   private secureApiClient: SecureApiClient;
+  private agentBuilderUI: AgentBuilderUI;
   private models: ModelInfo[] = [];
 
   constructor(config: CLIConfig) {
@@ -50,6 +54,7 @@ class RequestyCLI {
     this.keyManager = new KeyManager();
     this.secureKeyManager = new SecureKeyManager();
     this.secureApiClient = new SecureApiClient(config.baseURL, config.timeout);
+    this.agentBuilderUI = new AgentBuilderUI(config);
   }
 
   async run() {
@@ -76,6 +81,9 @@ class RequestyCLI {
           case 'pdf-chat':
             await this.runPDFChat();
             running = false; // Exit after PDF chat session
+            break;
+          case 'agent-builder':
+            await this.runAgentBuilder();
             break;
           case 'security':
             await this.showSecurityStatus();
@@ -125,6 +133,15 @@ class RequestyCLI {
       await pdfChatInterface.start(pdfPath);
     } catch (error) {
       this.ui.showError(error instanceof Error ? error.message : 'Failed to start PDF chat');
+    }
+  }
+
+  private async runAgentBuilder(): Promise<void> {
+    try {
+      await this.ensureApiKey();
+      await this.agentBuilderUI.showMainMenu();
+    } catch (error) {
+      this.ui.showError(error instanceof Error ? error.message : 'Failed to start agent builder');
     }
   }
 
