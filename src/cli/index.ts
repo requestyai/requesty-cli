@@ -16,6 +16,9 @@ import { DynamicResultsTable } from '../ui/dynamic-table';
 import { KeyManager } from '../utils/key-manager';
 import { PricingCalculator } from '../utils/pricing';
 
+// Security (Ultra-secure API key management)
+import { SecureKeyManager, SecureApiClient } from '../security';
+
 // Models and data
 import { DEFAULT_MODELS } from '../models/models';
 
@@ -35,6 +38,8 @@ class RequestyCLI {
   private ui: InteractiveUI;
   private config: CLIConfig;
   private keyManager: KeyManager;
+  private secureKeyManager: SecureKeyManager;
+  private secureApiClient: SecureApiClient;
   private models: ModelInfo[] = [];
 
   constructor(config: CLIConfig) {
@@ -43,6 +48,8 @@ class RequestyCLI {
     this.streaming = new StreamingClient(config);
     this.ui = new InteractiveUI();
     this.keyManager = new KeyManager();
+    this.secureKeyManager = new SecureKeyManager();
+    this.secureApiClient = new SecureApiClient(config.baseURL, config.timeout);
   }
 
   async run() {
@@ -69,6 +76,9 @@ class RequestyCLI {
           case 'pdf-chat':
             await this.runPDFChat();
             running = false; // Exit after PDF chat session
+            break;
+          case 'security':
+            await this.showSecurityStatus();
             break;
           case 'exit':
             running = false;
@@ -120,8 +130,13 @@ class RequestyCLI {
 
   private async ensureApiKey(): Promise<void> {
     if (!this.config.apiKey || this.config.apiKey === '<REQUESTY_API_KEY>') {
-      this.config.apiKey = await this.keyManager.getApiKey();
-      // Update API instances with the new key
+      // Use secure key manager for enhanced security
+      this.config.apiKey = await this.secureKeyManager.getApiKey();
+      
+      // Initialize secure API client
+      await this.secureApiClient.initialize();
+      
+      // Update regular API instances with the new key
       this.api = new RequestyAPI(this.config);
       this.streaming = new StreamingClient(this.config);
     }
@@ -134,6 +149,51 @@ class RequestyCLI {
       includeSystemPrompt: true,
       conversationHistory: true
     };
+  }
+
+  async showSecurityStatus(): Promise<void> {
+    try {
+      console.log('\n🔒 Security Status Report\n');
+      
+      // Get security status from secure API client
+      const securityStatus = this.secureApiClient.getSecurityStatus();
+      const secureConfig = this.secureApiClient.exportSecureConfig();
+      
+      console.log('🛡️  Encryption Status:');
+      console.log(`   Algorithm: ${secureConfig.encryption}`);
+      console.log(`   Key Derivation: ${secureConfig.keyDerivation}`);
+      console.log(`   TLS Version: ${secureConfig.tlsVersion}`);
+      console.log(`   Security Level: ${secureConfig.securityLevel}`);
+      
+      console.log('\n🔑 API Key Management:');
+      console.log(`   Key Store Exists: ${securityStatus.keyStoreExists ? '✅ Yes' : '❌ No'}`);
+      console.log(`   Key Store Valid: ${securityStatus.keyStoreValid ? '✅ Yes' : '❌ No'}`);
+      console.log(`   Encryption Level: ${securityStatus.encryptionLevel}`);
+      
+      if (secureConfig.keyStore) {
+        console.log('\n📊 Key Store Information:');
+        console.log(`   Version: ${secureConfig.keyStore.version}`);
+        console.log(`   Created: ${secureConfig.keyStore.created}`);
+        console.log(`   Algorithm: ${secureConfig.keyStore.algorithm}`);
+        console.log(`   Valid: ${secureConfig.keyStore.isValid ? '✅ Yes' : '❌ No'}`);
+      }
+      
+      console.log('\n🔐 Security Features:');
+      console.log('   ✅ AES-256-CBC encryption');
+      console.log('   ✅ PBKDF2-SHA256 key derivation');
+      console.log('   ✅ Machine fingerprinting');
+      console.log('   ✅ Secure memory management');
+      console.log('   ✅ TLS 1.2+ enforcement');
+      console.log('   ✅ Timing attack protection');
+      console.log('   ✅ Secure key validation');
+      console.log('   ✅ Atomic file operations');
+      console.log('   ✅ Secure file deletion');
+      console.log('   ✅ Anti-tampering protection');
+      
+      console.log('\n');
+    } catch (error) {
+      this.ui.showError(error instanceof Error ? error.message : 'Failed to retrieve security status');
+    }
   }
 
   private async testModels(models: string[], prompt: string, useStreaming: boolean) {
@@ -297,6 +357,15 @@ async function main(): Promise<void> {
     .name('requesty')
     .description('Interactive AI Model Testing CLI with Streaming')
     .version('2.0.0');
+
+  // Security status command
+  program
+    .command('security')
+    .description('Show security status and configuration')
+    .action(async () => {
+      const cli = new RequestyCLI(DEFAULT_CONFIG);
+      await cli.showSecurityStatus();
+    });
 
   // PDF Chat command
   program

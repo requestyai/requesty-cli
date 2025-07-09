@@ -41,7 +41,7 @@ export class InteractiveUI {
     console.log();
   }
 
-  async showMainMenu(): Promise<'quick' | 'select' | 'pdf-chat' | 'exit'> {
+  async showMainMenu(): Promise<'quick' | 'select' | 'pdf-chat' | 'security' | 'exit'> {
     const { action } = await inquirer.prompt([
       {
         type: 'list',
@@ -59,6 +59,10 @@ export class InteractiveUI {
           {
             name: '📄 Chat with PDF',
             value: 'pdf-chat'
+          },
+          {
+            name: '🔒 Security Status',
+            value: 'security'
           },
           {
             name: '❌ Exit',
