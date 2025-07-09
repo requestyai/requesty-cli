@@ -22,9 +22,18 @@ export class PricingCalculator {
     reasoningTokens: number = 0
   ): PricingInfo {
     // Default to 0 if no pricing info available
-    // Prices are typically given per 1M tokens, so we need to convert
-    const inputPricePerToken = (modelInfo.input_price || 0) / 1_000_000;
-    const outputPricePerToken = (modelInfo.output_price || 0) / 1_000_000;
+    const inputPrice = modelInfo.input_price || 0;
+    const outputPrice = modelInfo.output_price || 0;
+    
+    // If we have no pricing data, return zeros
+    if (inputPrice === 0 && outputPrice === 0) {
+      return { actualCost: 0, blendedCostPerMillion: 0 };
+    }
+    
+    // Prices from API are already per-token
+    // Based on your example: input_price: 8e-7 means $0.0000008 per token
+    const inputPricePerToken = inputPrice;
+    const outputPricePerToken = outputPrice;
     
     // Reasoning tokens are treated as input tokens for pricing
     const totalInputTokens = inputTokens + reasoningTokens;
