@@ -1,5 +1,8 @@
 # Dependencies
 node_modules/
+
+# Hive-mind database files
+.hive-mind/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
