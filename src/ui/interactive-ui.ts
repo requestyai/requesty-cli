@@ -1,11 +1,16 @@
 import chalk from 'chalk';
-import inquirer from 'inquirer';
+import Table from 'cli-table3';
 import figlet from 'figlet';
 import gradient from 'gradient-string';
+import inquirer from 'inquirer';
 import ora from 'ora';
-import Table from 'cli-table3';
-import { ModelProvider, categorizeModels, DEFAULT_MODELS, getProviderFromModel } from '../models/models';
 import { ModelInfo } from '../core/types';
+import {
+  categorizeModels,
+  DEFAULT_MODELS,
+  getProviderFromModel,
+  ModelProvider,
+} from '../models/models';
 import { FileValidator } from '../utils/file-validator';
 
 export class InteractiveUI {
@@ -26,21 +31,25 @@ export class InteractiveUI {
 
   async initializeModels(models: ModelInfo[]): Promise<void> {
     const spinner = ora('Loading model providers...').start();
-    
+
     this.providers = categorizeModels(models);
-    
+
     // Filter providers with models
-    Object.keys(this.providers).forEach(key => {
+    Object.keys(this.providers).forEach((key) => {
       if (this.providers[key].models.length === 0) {
         delete this.providers[key];
       }
     });
 
-    spinner.succeed(`Loaded ${Object.keys(this.providers).length} providers with ${models.length} models`);
+    spinner.succeed(
+      `Loaded ${Object.keys(this.providers).length} providers with ${models.length} models`
+    );
     console.log();
   }
 
-  async showMainMenu(): Promise<'quick' | 'select' | 'compare' | 'pdf-chat' | 'security' | 'exit'> {
+  async showMainMenu(): Promise<
+    'quick' | 'select' | 'pdf-chat' | 'security' | 'exit'
+  > {
     const { action } = await inquirer.prompt([
       {
         type: 'list',
@@ -49,30 +58,26 @@ export class InteractiveUI {
         choices: [
           {
             name: `🚀 Quick Start (${DEFAULT_MODELS.length} default models)`,
-            value: 'quick'
+            value: 'quick',
           },
           {
             name: '🎯 Select Models',
-            value: 'select'
-          },
-          {
-            name: '⚡ Compare 2 Prompts',
-            value: 'compare'
+            value: 'select',
           },
           {
             name: '📄 Chat with PDF',
-            value: 'pdf-chat'
+            value: 'pdf-chat',
           },
           {
             name: '🔒 Security Status',
-            value: 'security'
+            value: 'security',
           },
           {
             name: '❌ Exit',
-            value: 'exit'
-          }
-        ]
-      }
+            value: 'exit',
+          },
+        ],
+      },
     ]);
 
     return action;
@@ -87,12 +92,14 @@ export class InteractiveUI {
         type: 'checkbox',
         name: 'selectedProviders',
         message: 'Select providers:',
-        choices: Object.values(this.providers).map(provider => ({
+        choices: Object.values(this.providers).map((provider) => ({
           name: `${provider.displayName} (${provider.models.length} models)`,
           value: provider.name,
-          checked: DEFAULT_MODELS.some(model => model.startsWith(provider.name))
-        }))
-      }
+          checked: DEFAULT_MODELS.some((model) =>
+            model.startsWith(provider.name)
+          ),
+        })),
+      },
     ]);
 
     if (selectedProviders.length === 0) {
@@ -109,13 +116,13 @@ export class InteractiveUI {
           type: 'checkbox',
           name: 'models',
           message: `Select models from ${provider.displayName}:`,
-          choices: provider.models.map(model => ({
+          choices: provider.models.map((model) => ({
             name: model.split('/').slice(1).join('/'),
             value: model,
-            checked: DEFAULT_MODELS.includes(model)
+            checked: DEFAULT_MODELS.includes(model),
           })),
-          pageSize: 15
-        }
+          pageSize: 15,
+        },
       ]);
 
       selectedModels.push(...models);
@@ -133,14 +140,14 @@ export class InteractiveUI {
         choices: [
           {
             name: '📡 Stream responses (real-time, live output)',
-            value: true
+            value: true,
           },
           {
             name: '📊 Standard responses (complete responses with token counts)',
-            value: false
-          }
-        ]
-      }
+            value: false,
+          },
+        ],
+      },
     ]);
 
     return useStreaming;
@@ -152,23 +159,27 @@ export class InteractiveUI {
         type: 'input',
         name: 'prompt',
         message: '💬 Enter your prompt:',
-        validate: (input: string) => input.trim().length > 0 || 'Prompt cannot be empty'
-      }
+        validate: (input: string) =>
+          input.trim().length > 0 || 'Prompt cannot be empty',
+      },
     ]);
 
     return prompt;
   }
 
   async getComparisonPrompts(): Promise<{ prompt1: string; prompt2: string }> {
-    console.log(chalk.yellow('\n📝 Enter two prompts to compare performance:\n'));
-    
+    console.log(
+      chalk.yellow('\n📝 Enter two prompts to compare performance:\n')
+    );
+
     const { prompt1 } = await inquirer.prompt([
       {
         type: 'input',
         name: 'prompt1',
         message: '💬 Prompt 1 (Baseline):',
-        validate: (input: string) => input.trim().length > 0 || 'Prompt 1 cannot be empty'
-      }
+        validate: (input: string) =>
+          input.trim().length > 0 || 'Prompt 1 cannot be empty',
+      },
     ]);
 
     const { prompt2 } = await inquirer.prompt([
@@ -176,8 +187,9 @@ export class InteractiveUI {
         type: 'input',
         name: 'prompt2',
         message: '💬 Prompt 2 (Comparison):',
-        validate: (input: string) => input.trim().length > 0 || 'Prompt 2 cannot be empty'
-      }
+        validate: (input: string) =>
+          input.trim().length > 0 || 'Prompt 2 cannot be empty',
+      },
     ]);
 
     return { prompt1, prompt2 };
@@ -192,8 +204,8 @@ export class InteractiveUI {
         validate: (input: string) => {
           const validation = FileValidator.validatePDF(input.trim());
           return validation.valid ? true : validation.error!;
-        }
-      }
+        },
+      },
     ]);
 
     return pdfPath;
@@ -207,31 +219,27 @@ export class InteractiveUI {
         message: '🤖 Select AI model for PDF chat:',
         choices: [
           {
-            name: 'GPT-4o (OpenAI) - Recommended',
-            value: 'openai/gpt-4o'
+            name: 'GPT-4.1 (OpenAI) - Recommended for PDF',
+            value: 'openai/gpt-4.1',
           },
           {
-            name: 'GPT-4.1 (OpenAI)',
-            value: 'openai/gpt-4.1'
+            name: 'Claude Sonnet 4 (Anthropic) - Great for analysis',
+            value: 'anthropic/claude-sonnet-4-20250514',
           },
           {
-            name: 'Claude Sonnet 4 (Anthropic)',
-            value: 'anthropic/claude-sonnet-4-20250514'
+            name: 'Gemini 2.5 Flash (Google) - Fast and efficient',
+            value: 'google/gemini-2.5-flash',
           },
           {
-            name: 'Claude 3.5 Sonnet (Anthropic)',
-            value: 'anthropic/claude-3-5-sonnet-20241022'
+            name: 'Mistral Large (Mistral) - Cost effective',
+            value: 'mistral/mistral-large-latest',
           },
           {
-            name: 'Gemini 2.5 Flash (Google)',
-            value: 'google/gemini-2.5-flash'
+            name: 'GPT-4o Mini (OpenAI) - Budget friendly',
+            value: 'openai/gpt-4o-mini',
           },
-          {
-            name: 'Gemini 2.5 Pro (Google)',
-            value: 'google/gemini-2.5-pro'
-          }
-        ]
-      }
+        ],
+      },
     ]);
 
     return model;
@@ -240,21 +248,21 @@ export class InteractiveUI {
   showSelectedModels(models: string[]) {
     console.log();
     console.log(chalk.green('✅ Selected Models:'));
-    
+
     const table = new Table({
       head: ['#', 'Provider', 'Model'],
-      style: { head: ['cyan'] }
+      style: { head: ['cyan'] },
     });
 
     models.forEach((model, index) => {
       const provider = getProviderFromModel(model);
       const modelName = model.split('/').slice(1).join('/');
       const providerInfo = this.providers[provider];
-      
+
       table.push([
         (index + 1).toString(),
         providerInfo ? providerInfo.displayName : provider,
-        modelName
+        modelName,
       ]);
     });
 
@@ -264,21 +272,27 @@ export class InteractiveUI {
 
   createStreamingProgress(modelName: string): {
     spinner: any;
-    updateProgress: (content: string, stats: { tokensPerSecond: number; totalTokens: number }) => void;
+    updateProgress: (
+      content: string,
+      stats: { tokensPerSecond: number; totalTokens: number }
+    ) => void;
     finish: (success: boolean, error?: string) => void;
   } {
     const spinner = ora({
       text: `${chalk.blue(modelName.padEnd(25))} Starting...`,
-      spinner: 'dots'
+      spinner: 'dots',
     }).start();
 
     const startTime = Date.now();
     let lastUpdateTime = startTime;
 
-    const updateProgress = (content: string, stats: { tokensPerSecond: number; totalTokens: number }) => {
+    const updateProgress = (
+      content: string,
+      stats: { tokensPerSecond: number; totalTokens: number }
+    ) => {
       const currentTime = Date.now();
       const currentDuration = currentTime - startTime;
-      
+
       // Update every 100ms to avoid overwhelming the terminal
       if (currentTime - lastUpdateTime >= 100) {
         spinner.text = `${chalk.blue(modelName.padEnd(25))} ${stats.tokensPerSecond.toFixed(0)} tok/s | ${stats.totalTokens} tokens | ${currentDuration}ms`;
@@ -288,9 +302,11 @@ export class InteractiveUI {
 
     const finish = (success: boolean, error?: string) => {
       const finalDuration = Date.now() - startTime;
-      
+
       if (success) {
-        spinner.succeed(`${chalk.green(modelName.padEnd(25))} completed in ${finalDuration}ms`);
+        spinner.succeed(
+          `${chalk.green(modelName.padEnd(25))} completed in ${finalDuration}ms`
+        );
       } else {
         spinner.fail(`${chalk.red(modelName.padEnd(25))} failed: ${error}`);
       }
@@ -308,22 +324,31 @@ export class InteractiveUI {
     console.log();
   }
 
-  showSummary(results: Array<{ model: string; success: boolean; duration: number; tokensPerSecond: number; totalTokens: number; error?: string }>) {
+  showSummary(
+    results: Array<{
+      model: string;
+      success: boolean;
+      duration: number;
+      tokensPerSecond: number;
+      totalTokens: number;
+      error?: string;
+    }>
+  ) {
     console.log();
     console.log(chalk.green('📊 Summary:'));
-    
+
     const table = new Table({
       head: ['Model', 'Status', 'Duration', 'Speed', 'Tokens'],
-      style: { head: ['cyan'] }
+      style: { head: ['cyan'] },
     });
 
-    results.forEach(result => {
+    results.forEach((result) => {
       table.push([
         result.model,
         result.success ? chalk.green('✅') : chalk.red('❌'),
         `${result.duration}ms`,
         `${result.tokensPerSecond.toFixed(0)} tok/s`,
-        result.totalTokens.toString()
+        result.totalTokens.toString(),
       ]);
     });
 
@@ -337,8 +362,8 @@ export class InteractiveUI {
         type: 'confirm',
         name: 'continue',
         message: 'Would you like to test another prompt?',
-        default: true
-      }
+        default: true,
+      },
     ]);
 
     return cont;
@@ -350,8 +375,8 @@ export class InteractiveUI {
         type: 'confirm',
         name: 'showResponses',
         message: 'Would you like to see all the response content?',
-        default: false
-      }
+        default: false,
+      },
     ]);
 
     return showResponses;
@@ -362,9 +387,10 @@ export class InteractiveUI {
       {
         type: 'confirm',
         name: 'showDebug',
-        message: 'Would you like to see raw response debug data (for troubleshooting models with no response)?',
-        default: false
-      }
+        message:
+          'Would you like to see raw response debug data (for troubleshooting models with no response)?',
+        default: false,
+      },
     ]);
 
     return showDebug;

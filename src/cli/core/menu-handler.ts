@@ -10,7 +10,7 @@ import { InteractiveUI } from '../../ui/interactive-ui';
 /**
  * Menu actions available in the CLI
  */
-export type MenuAction = 'quick' | 'select' | 'compare' | 'pdf-chat' | 'security' | 'exit';
+export type MenuAction = 'quick' | 'select' | 'pdf-chat' | 'security' | 'exit';
 
 /**
  * Handles all menu-related operations for the CLI
@@ -107,7 +107,6 @@ export class MenuHandler {
       console.log('Available commands:');
       console.log('  🚀 Quick Start - Test 5 default models');
       console.log('  🎯 Select Models - Choose specific models to test');
-      console.log('  ⚡ Compare 2 Prompts - Compare prompts across models');
       console.log('  📄 Chat with PDF - Upload and chat with PDF documents');
       console.log('  🔒 Security Status - View security configuration');
       console.log('  ❌ Exit - Exit the application');

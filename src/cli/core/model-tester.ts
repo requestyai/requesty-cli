@@ -9,7 +9,6 @@ import { RequestyAPI } from '../../core/api';
 import { StreamingClient } from '../../core/streaming';
 import { ModelInfo } from '../../core/types';
 import { DEFAULT_MODELS } from '../../models/models';
-import { ComparisonTable } from '../../ui/comparison-table';
 import { DynamicResultsTable } from '../../ui/dynamic-table';
 import { InteractiveUI } from '../../ui/interactive-ui';
 import { SessionManager } from '../../utils/session-manager';
@@ -71,9 +70,6 @@ export class ModelTester {
       // Get prompt from user
       const prompt = await this.ui.getPrompt();
 
-      // Get streaming preference
-      const streaming = await this.ui.getStreamingChoice();
-
       // Always use DEFAULT_MODELS for quick start - don't rely on API
       const modelsToTest = DEFAULT_MODELS;
 
@@ -84,8 +80,8 @@ export class ModelTester {
         return;
       }
 
-      // Test models
-      const results = await this.testModels(modelsToTest, prompt, streaming);
+      // Test models (no streaming for quick start - keep it simple and fast)
+      const results = await this.testModels(modelsToTest, prompt, false);
 
       // Display results
       await this.displayResults(results, 'Quick Start Results');
@@ -142,55 +138,6 @@ export class ModelTester {
     } catch (error) {
       console.error(
         '❌ Custom Selection Error:',
-        error instanceof Error ? error.message : 'Unknown error'
-      );
-    } finally {
-      // Always end session
-      this.sessionManager.endSession();
-    }
-  }
-
-  /**
-   * Run prompt comparison testing
-   * @param availableModels - Array of available models
-   */
-  async runPromptComparison(availableModels: ModelInfo[]): Promise<void> {
-    try {
-      console.log('\n⚡ Prompt Comparison');
-      console.log(
-        '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
-      );
-
-      // Start session for tracking
-      this.sessionManager.startSession('prompt_comparison');
-
-      // Get two prompts from user
-      console.log('📝 Enter first prompt:');
-      const prompt1 = await this.ui.getPrompt();
-
-      console.log('📝 Enter second prompt:');
-      const prompt2 = await this.ui.getPrompt();
-
-      // Use first 3 DEFAULT_MODELS for comparison
-      const modelsToTest = DEFAULT_MODELS.slice(0, 3);
-
-      if (modelsToTest.length === 0) {
-        console.log('❌ No models available for comparison');
-        return;
-      }
-
-      // Test both prompts concurrently for maximum speed
-      console.log('\n🔄 Testing both prompts concurrently...');
-      const [results1, results2] = await Promise.all([
-        this.testModels(modelsToTest, prompt1, false),
-        this.testModels(modelsToTest, prompt2, false),
-      ]);
-
-      // Display comparison
-      await this.displayComparison(results1, results2, prompt1, prompt2);
-    } catch (error) {
-      console.error(
-        '❌ Prompt Comparison Error:',
         error instanceof Error ? error.message : 'Unknown error'
       );
     } finally {
@@ -389,57 +336,5 @@ export class ModelTester {
         `\n📊 Token Usage: ${totalTokens} total (${inputTokens} input + ${outputTokens} output)`
       );
     }
-  }
-
-  /**
-   * Display comparison results
-   * @param results1 - Results from first prompt
-   * @param results2 - Results from second prompt
-   * @param prompt1 - First prompt
-   * @param prompt2 - Second prompt
-   * @private
-   */
-  private async displayComparison(
-    results1: ModelTestResult[],
-    results2: ModelTestResult[],
-    prompt1: string,
-    prompt2: string
-  ): Promise<void> {
-    console.log('\n📊 Prompt Comparison Results');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-
-    // Create comparison table
-    const table = new ComparisonTable(
-      results1.map((r) => r.model),
-      false,
-      prompt1,
-      prompt2
-    );
-
-    // Update comparison data
-    for (let i = 0; i < results1.length; i++) {
-      const result1 = results1[i];
-      const result2 = results2[i];
-
-      table.updateModel(result1.model, 'prompt1', {
-        status: result1.success ? 'completed' : 'failed',
-        duration: result1.duration,
-        totalTokens: result1.tokensUsed,
-        actualCost: result1.cost,
-      });
-
-      table.updateModel(result2.model, 'prompt2', {
-        status: result2.success ? 'completed' : 'failed',
-        duration: result2.duration,
-        totalTokens: result2.tokensUsed,
-        actualCost: result2.cost,
-      });
-    }
-
-    // Display table
-    table.showFinalSummary();
-
-    console.log(`\n📝 Prompt 1: "${prompt1.substring(0, 50)}..."`);
-    console.log(`📝 Prompt 2: "${prompt2.substring(0, 50)}..."`);
   }
 }

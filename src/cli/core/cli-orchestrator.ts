@@ -158,12 +158,8 @@ export class CLIOrchestrator {
         case 'select':
           await this.handleCustomSelection();
           break;
-        case 'compare':
-          await this.handlePromptComparison();
-          break;
         case 'pdf-chat':
           await this.handlePDFChat();
-          running = false; // Exit after PDF chat session
           break;
         case 'security':
           await this.handleSecurityStatus();
@@ -192,35 +188,41 @@ export class CLIOrchestrator {
   }
 
   /**
-   * Handle prompt comparison
-   * @private
-   */
-  private async handlePromptComparison(): Promise<void> {
-    await this.modelTester.runPromptComparison(this.models);
-  }
-
-  /**
    * Handle PDF chat functionality
    * @private
    */
   private async handlePDFChat(): Promise<void> {
     try {
+      console.log('\n📄 PDF Chat - Interactive Document Analysis');
+      console.log(
+        '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+      );
+
+      // Get PDF file path from user
+      const pdfPath = await this.ui.getPDFPath();
+
+      // Get model choice from user
+      const model = await this.ui.getPDFModel();
+
+      console.log(`\n🤖 Using model: ${model}`);
+      console.log(`📄 Processing PDF: ${pdfPath}\n`);
+
+      // Import PDF chat interface
       const { PDFChatInterface } = await import(
         '../../pdf-chat/ui/chat-interface'
       );
 
+      // Configure PDF chat
       const pdfConfig: any = {
-        model: 'gpt-4o-mini',
+        model: model,
         temperature: this.config.temperature,
         includeSystemPrompt: true,
-        conversationHistory: false,
+        conversationHistory: true,
       };
 
+      // Create and start PDF chat session
       const pdfChat = new PDFChatInterface(this.config, pdfConfig);
-
-      // This would start the PDF chat session
-      console.log('🚀 Starting PDF chat session...');
-      console.log('PDF chat functionality ready - upload a PDF to begin');
+      await pdfChat.start(pdfPath);
     } catch (error) {
       console.error(
         '❌ PDF Chat Error:',
