@@ -179,12 +179,12 @@ export class ModelTester {
         return;
       }
 
-      // Test both prompts
-      console.log('\n🔄 Testing first prompt...');
-      const results1 = await this.testModels(modelsToTest, prompt1, false);
-
-      console.log('\n🔄 Testing second prompt...');
-      const results2 = await this.testModels(modelsToTest, prompt2, false);
+      // Test both prompts concurrently for maximum speed
+      console.log('\n🔄 Testing both prompts concurrently...');
+      const [results1, results2] = await Promise.all([
+        this.testModels(modelsToTest, prompt1, false),
+        this.testModels(modelsToTest, prompt2, false),
+      ]);
 
       // Display comparison
       await this.displayComparison(results1, results2, prompt1, prompt2);
@@ -224,8 +224,8 @@ export class ModelTester {
     console.log('\n📊 Live Results:\n');
     const table = new DynamicResultsTable(modelNames, streaming);
 
-    // Test models sequentially for live updates
-    for (const model of models) {
+    // Test models concurrently for maximum speed with live updates
+    const testPromises = models.map(async (model) => {
       try {
         // Handle both string and ModelInfo inputs
         const modelName = typeof model === 'string' ? model : model.name;
@@ -268,7 +268,7 @@ export class ModelTester {
           reasoningTokens: reasoningTokens,
         };
 
-        // Update table with result
+        // Update table with result LIVE as this model completes
         table.updateModel(modelName, {
           status: result.success ? 'completed' : 'failed',
           duration: result.duration,
@@ -282,7 +282,7 @@ export class ModelTester {
           reasoningTokens: reasoningTokens,
         });
 
-        results.push(testResult);
+        return testResult;
       } catch (error) {
         const modelName = typeof model === 'string' ? model : model.name;
         const testResult = {
@@ -292,16 +292,20 @@ export class ModelTester {
           duration: 0,
         };
 
-        // Update table with error
+        // Update table with error LIVE as this model fails
         table.updateModel(modelName, {
           status: 'failed',
           error: testResult.error,
           duration: 0,
         });
 
-        results.push(testResult);
+        return testResult;
       }
-    }
+    });
+
+    // Wait for all concurrent requests to complete
+    const testResults = await Promise.all(testPromises);
+    results.push(...testResults);
 
     return results;
   }
