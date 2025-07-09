@@ -2,8 +2,7 @@ import chalk from 'chalk';
 import inquirer from 'inquirer';
 import figlet from 'figlet';
 import gradient from 'gradient-string';
-import cliProgress from 'cli-progress';
-import { createSpinner } from 'nanospinner';
+import ora from 'ora';
 import Table from 'cli-table3';
 import { ModelProvider, categorizeModels, DEFAULT_MODELS, getProviderFromModel } from '../models/models';
 import { ModelInfo } from '../core/types';
@@ -26,7 +25,7 @@ export class InteractiveUI {
   }
 
   async initializeModels(models: ModelInfo[]): Promise<void> {
-    const spinner = createSpinner('Loading model providers...').start();
+    const spinner = ora('Loading model providers...').start();
     
     this.providers = categorizeModels(models);
     
@@ -37,7 +36,7 @@ export class InteractiveUI {
       }
     });
 
-    spinner.success({ text: `Loaded ${Object.keys(this.providers).length} providers with ${models.length} models` });
+    spinner.succeed(`Loaded ${Object.keys(this.providers).length} providers with ${models.length} models`);
     console.log();
   }
 
@@ -264,62 +263,40 @@ export class InteractiveUI {
   }
 
   createStreamingProgress(modelName: string): {
-    progress: cliProgress.SingleBar;
+    spinner: any;
     updateProgress: (content: string, stats: { tokensPerSecond: number; totalTokens: number }) => void;
     finish: (success: boolean, error?: string) => void;
   } {
-    // Use dynamic max value based on expected tokens, with minimum of 50
-    const maxTokens = Math.max(200, 50);
-    
-    const progress = new cliProgress.SingleBar({
-      format: `${chalk.blue(modelName.padEnd(25))} |{bar}| {percentage}% | {speed} tok/s | {tokens} tokens | {duration}ms`,
-      barCompleteChar: '█',
-      barIncompleteChar: '░',
-      hideCursor: true,
-      clearOnComplete: false,
-      stopOnComplete: false,
-      barsize: 30
-    }, cliProgress.Presets.shades_classic);
+    const spinner = ora({
+      text: `${chalk.blue(modelName.padEnd(25))} Starting...`,
+      spinner: 'dots'
+    }).start();
 
     const startTime = Date.now();
-    progress.start(maxTokens, 0, {
-      speed: '0',
-      tokens: '0',
-      duration: '0'
-    });
+    let lastUpdateTime = startTime;
 
     const updateProgress = (content: string, stats: { tokensPerSecond: number; totalTokens: number }) => {
-      const currentDuration = Date.now() - startTime;
-      const progressValue = Math.min(stats.totalTokens, maxTokens);
-      const percentage = ((stats.totalTokens / maxTokens) * 100).toFixed(0);
+      const currentTime = Date.now();
+      const currentDuration = currentTime - startTime;
       
-      progress.update(progressValue, {
-        speed: stats.tokensPerSecond.toFixed(0),
-        tokens: stats.totalTokens.toString(),
-        duration: currentDuration.toString(),
-        percentage: percentage
-      });
+      // Update every 100ms to avoid overwhelming the terminal
+      if (currentTime - lastUpdateTime >= 100) {
+        spinner.text = `${chalk.blue(modelName.padEnd(25))} ${stats.tokensPerSecond.toFixed(0)} tok/s | ${stats.totalTokens} tokens | ${currentDuration}ms`;
+        lastUpdateTime = currentTime;
+      }
     };
 
     const finish = (success: boolean, error?: string) => {
       const finalDuration = Date.now() - startTime;
       
       if (success) {
-        progress.update(maxTokens, {
-          speed: 'Done',
-          tokens: 'Complete',
-          duration: finalDuration.toString(),
-          percentage: '100'
-        });
-        progress.stop();
-        console.log(chalk.green(`✅ ${modelName} completed in ${finalDuration}ms`));
+        spinner.succeed(`${chalk.green(modelName.padEnd(25))} completed in ${finalDuration}ms`);
       } else {
-        progress.stop();
-        console.log(chalk.red(`❌ ${modelName} failed: ${error}`));
+        spinner.fail(`${chalk.red(modelName.padEnd(25))} failed: ${error}`);
       }
     };
 
-    return { progress, updateProgress, finish };
+    return { spinner, updateProgress, finish };
   }
 
   showStreamingResponse(modelName: string, response: string) {
