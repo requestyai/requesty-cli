@@ -5,8 +5,8 @@ import gradient from 'gradient-string';
 import cliProgress from 'cli-progress';
 import { createSpinner } from 'nanospinner';
 import Table from 'cli-table3';
-import { ModelProvider, categorizeModels, DEFAULT_MODELS, getProviderFromModel } from './models';
-import { ModelInfo } from './types';
+import { ModelProvider, categorizeModels, DEFAULT_MODELS, getProviderFromModel } from '../models/models';
+import { ModelInfo } from '../core/types';
 
 export class InteractiveUI {
   private providers: Record<string, ModelProvider> = {};

@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 import ora from 'ora';
-import { ModelResult, ModelInfo } from './types';
+import { ModelResult, ModelInfo } from '../core/types';
 
 export class TerminalUI {
   private darkMode: boolean = true;

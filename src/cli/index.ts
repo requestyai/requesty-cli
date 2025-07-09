@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import { RequestyAPI } from './api';
-import { InteractiveUI } from './interactive-ui';
-import { StreamingClient } from './streaming';
-import { DynamicResultsTable } from './dynamic-table';
-import { CLIConfig, ChatCompletionRequest } from './types';
-import { DEFAULT_MODELS } from './models';
+import { RequestyAPI } from '../core/api';
+import { InteractiveUI } from '../ui/interactive-ui';
+import { StreamingClient } from '../core/streaming';
+import { DynamicResultsTable } from '../ui/dynamic-table';
+import { CLIConfig, ChatCompletionRequest } from '../core/types';
+import { DEFAULT_MODELS } from '../models/models';
 
 const DEFAULT_CONFIG: CLIConfig = {
   baseURL: 'https://router.requesty.ai/v1',

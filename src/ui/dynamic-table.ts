@@ -130,16 +130,22 @@ export class DynamicResultsTable {
   private updateNonStreamingTable() {
     // For non-streaming, only update when status actually changes
     // This prevents flickering and is more stable
-    // We'll just redraw less frequently and only when meaningful changes occur
     
-    // Simple approach: only redraw if we have completed models
+    // Only redraw if we have completed or failed models
     const hasCompleted = Array.from(this.results.values()).some(r => r.status === 'completed' || r.status === 'failed');
     
     if (hasCompleted) {
-      // Move cursor up to overwrite table
-      const tableLines = this.table.length + 4; // table rows + borders + spacing
-      process.stdout.write(`\x1b[${tableLines}A`); // Move cursor up
-      this.renderFullTable();
+      // Clear the entire table area more reliably
+      const tableLines = this.table.length + 6; // table rows + borders + extra spacing
+      
+      // Move cursor up and clear lines
+      for (let i = 0; i < tableLines; i++) {
+        process.stdout.write('\x1b[1A'); // Move cursor up one line
+        process.stdout.write('\x1b[2K'); // Clear the entire line
+      }
+      
+      // Redraw the table without the header (since it was already shown)
+      this.renderTableOnly();
     }
   }
 
