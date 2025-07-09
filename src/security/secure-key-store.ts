@@ -1,7 +1,10 @@
-import fs from 'fs';
-import path from 'path';
-import os from 'os';
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
 import { CryptoManager } from './crypto-manager';
+import { ErrorHandler } from '../utils/error-handler';
+import { InputValidator } from '../utils/input-validator';
+import { PerformanceMonitor } from '../utils/performance-monitor';
 
 /**
  * Ultra-secure API key storage with multiple layers of protection
@@ -30,8 +33,15 @@ export class SecureKeyStore {
    * Initialize secure storage directory with proper permissions
    */
   private initializeStorage(): void {
-    if (!fs.existsSync(this.storePath)) {
-      fs.mkdirSync(this.storePath, { mode: 0o700 }); // Only owner can read/write/execute
+    try {
+      // Validate storage path
+      const validatedPath = InputValidator.validateFilePath(this.storePath);
+      
+      if (!fs.existsSync(validatedPath)) {
+        fs.mkdirSync(validatedPath, { mode: 0o700 }); // Only owner can read/write/execute
+      }
+    } catch (error) {
+      ErrorHandler.handleFileError(error, 'storage initialization', this.storePath);
     }
   }
 
@@ -39,19 +49,27 @@ export class SecureKeyStore {
    * Acquire exclusive lock for atomic operations
    */
   private acquireLock(): void {
-    if (fs.existsSync(this.lockFilePath)) {
-      throw new Error('Another process is accessing the secure key store');
+    try {
+      if (fs.existsSync(this.lockFilePath)) {
+        throw new Error('Another process is accessing the secure key store');
+      }
+      
+      fs.writeFileSync(this.lockFilePath, process.pid.toString(), { mode: 0o600 });
+    } catch (error) {
+      ErrorHandler.handleFileError(error, 'lock acquisition', this.lockFilePath);
     }
-    
-    fs.writeFileSync(this.lockFilePath, process.pid.toString(), { mode: 0o600 });
   }
 
   /**
    * Release exclusive lock
    */
   private releaseLock(): void {
-    if (fs.existsSync(this.lockFilePath)) {
-      fs.unlinkSync(this.lockFilePath);
+    try {
+      if (fs.existsSync(this.lockFilePath)) {
+        fs.unlinkSync(this.lockFilePath);
+      }
+    } catch (error) {
+      ErrorHandler.handleFileError(error, 'lock release', this.lockFilePath);
     }
   }
 
@@ -97,99 +115,117 @@ export class SecureKeyStore {
    * Store API key with multiple layers of encryption
    */
   async store(apiKey: string): Promise<void> {
-    this.initializeStorage();
-    this.acquireLock();
+    return PerformanceMonitor.measureAsync(
+      async () => {
+        try {
+          // Validate API key before storing
+          const validatedApiKey = InputValidator.validateApiKey(apiKey);
+          
+          this.initializeStorage();
+          this.acquireLock();
 
-    try {
-      // Generate secure encryption materials using machine fingerprint
-      const masterPassword = this.machineFingerprint;
-      const salt = CryptoManager.generateSalt();
-      const derivedKey = CryptoManager.deriveKey(masterPassword, salt);
+          try {
+            // Generate secure encryption materials using machine fingerprint
+            const masterPassword = this.machineFingerprint;
+            const salt = CryptoManager.generateSalt();
+            const derivedKey = CryptoManager.deriveKey(masterPassword, salt);
 
-      // Encrypt the API key
-      const { encrypted, iv, tag } = CryptoManager.encrypt(apiKey, derivedKey);
+            // Encrypt the API key
+            const { encrypted, iv, tag } = CryptoManager.encrypt(validatedApiKey, derivedKey);
 
-      // Create storage payload
-      const payload = {
-        salt: salt.toString('base64'),
-        iv: iv.toString('base64'),
-        tag: tag.toString('base64'),
-        encrypted: encrypted.toString('base64'),
-        hash: CryptoManager.createHash(apiKey)
-      };
+            // Create storage payload
+            const payload = {
+              salt: salt.toString('base64'),
+              iv: iv.toString('base64'),
+              tag: tag.toString('base64'),
+              encrypted: encrypted.toString('base64'),
+              hash: CryptoManager.createHash(validatedApiKey)
+            };
 
-      // Store encrypted data
-      fs.writeFileSync(this.keyFilePath, JSON.stringify(payload), { mode: 0o600 });
+            // Store encrypted data
+            fs.writeFileSync(this.keyFilePath, JSON.stringify(payload), { mode: 0o600 });
 
-      // Store metadata
-      const metadata = this.createMetadata();
-      fs.writeFileSync(this.metadataFilePath, JSON.stringify(metadata), { mode: 0o600 });
+            // Store metadata
+            const metadata = this.createMetadata();
+            fs.writeFileSync(this.metadataFilePath, JSON.stringify(metadata), { mode: 0o600 });
 
-      // Master password is derived from machine fingerprint, no need to store in memory
+            // Clear sensitive data from memory
+            CryptoManager.secureZeroMemory(derivedKey);
+            CryptoManager.secureZeroMemory(salt);
 
-      // Clear sensitive data from memory
-      CryptoManager.secureZeroMemory(derivedKey);
-      CryptoManager.secureZeroMemory(salt);
-
-    } finally {
-      this.releaseLock();
-    }
+          } finally {
+            this.releaseLock();
+          }
+        } catch (error) {
+          ErrorHandler.handleSecurityError(error, 'API key storage', true);
+        }
+      },
+      'store-api-key'
+    ).then(result => result.result);
   }
 
   /**
    * Retrieve and decrypt API key
    */
   async retrieve(): Promise<string | null> {
-    if (!this.exists()) {
-      return null;
-    }
+    return PerformanceMonitor.measureAsync(
+      async () => {
+        try {
+          if (!this.exists()) {
+            return null;
+          }
 
-    this.acquireLock();
+          this.acquireLock();
 
-    try {
-      // Read metadata and validate
-      const metadataContent = fs.readFileSync(this.metadataFilePath, 'utf8');
-      const metadata = JSON.parse(metadataContent);
-      
-      if (!this.validateMetadata(metadata)) {
-        throw new Error('Invalid or corrupted key metadata');
-      }
+          try {
+            // Read metadata and validate
+            const metadataContent = fs.readFileSync(this.metadataFilePath, 'utf8');
+            const metadata = JSON.parse(metadataContent);
+            
+            if (!this.validateMetadata(metadata)) {
+              throw new Error('Invalid or corrupted key metadata');
+            }
 
-      // Read encrypted payload
-      const payloadContent = fs.readFileSync(this.keyFilePath, 'utf8');
-      const payload = JSON.parse(payloadContent);
+            // Read encrypted payload
+            const payloadContent = fs.readFileSync(this.keyFilePath, 'utf8');
+            const payload = JSON.parse(payloadContent);
 
-      // Use machine fingerprint as master password for consistency
-      // This way we don't need to store the master password in memory
-      const masterPassword = this.machineFingerprint;
+            // Use machine fingerprint as master password for consistency
+            const masterPassword = this.machineFingerprint;
 
-      // Reconstruct encryption materials
-      const salt = Buffer.from(payload.salt, 'base64');
-      const iv = Buffer.from(payload.iv, 'base64');
-      const tag = Buffer.from(payload.tag, 'base64');
-      const encrypted = Buffer.from(payload.encrypted, 'base64');
+            // Reconstruct encryption materials
+            const salt = Buffer.from(payload.salt, 'base64');
+            const iv = Buffer.from(payload.iv, 'base64');
+            const tag = Buffer.from(payload.tag, 'base64');
+            const encrypted = Buffer.from(payload.encrypted, 'base64');
 
-      // Derive key and decrypt
-      const derivedKey = CryptoManager.deriveKey(masterPassword, salt);
-      const decryptedKey = CryptoManager.decrypt(encrypted, derivedKey, iv, tag);
+            // Derive key and decrypt
+            const derivedKey = CryptoManager.deriveKey(masterPassword, salt);
+            const decryptedKey = CryptoManager.decrypt(encrypted, derivedKey, iv, tag);
 
-      // Verify integrity
-      const expectedHash = payload.hash;
-      const actualHash = CryptoManager.createHash(decryptedKey);
-      
-      if (!CryptoManager.constantTimeEquals(actualHash, expectedHash)) {
-        throw new Error('Key integrity verification failed');
-      }
+            // Verify integrity
+            const expectedHash = payload.hash;
+            const actualHash = CryptoManager.createHash(decryptedKey);
+            
+            if (!CryptoManager.constantTimeEquals(actualHash, expectedHash)) {
+              throw new Error('Key integrity verification failed');
+            }
 
-      // Clear sensitive data from memory
-      CryptoManager.secureZeroMemory(derivedKey);
-      CryptoManager.secureZeroMemory(salt);
+            // Clear sensitive data from memory
+            CryptoManager.secureZeroMemory(derivedKey);
+            CryptoManager.secureZeroMemory(salt);
 
-      return decryptedKey;
+            return decryptedKey;
 
-    } finally {
-      this.releaseLock();
-    }
+          } finally {
+            this.releaseLock();
+          }
+        } catch (error) {
+          ErrorHandler.handleSecurityError(error, 'API key retrieval', true);
+        }
+      },
+      'retrieve-api-key'
+    ).then(result => result.result);
   }
 
   /**
@@ -203,38 +239,47 @@ export class SecureKeyStore {
    * Securely remove stored key
    */
   async remove(): Promise<void> {
-    if (!this.exists()) {
-      return;
-    }
+    return PerformanceMonitor.measureAsync(
+      async () => {
+        try {
+          if (!this.exists()) {
+            return;
+          }
 
-    this.acquireLock();
+          this.acquireLock();
 
-    try {
-      // Secure deletion by overwriting with random data
-      if (fs.existsSync(this.keyFilePath)) {
-        const keyFileSize = fs.statSync(this.keyFilePath).size;
-        const randomData = Buffer.alloc(keyFileSize);
-        randomData.fill(Math.floor(Math.random() * 256));
-        fs.writeFileSync(this.keyFilePath, randomData);
-        fs.unlinkSync(this.keyFilePath);
-      }
+          try {
+            // Secure deletion by overwriting with random data
+            if (fs.existsSync(this.keyFilePath)) {
+              const keyFileSize = fs.statSync(this.keyFilePath).size;
+              const randomData = Buffer.alloc(keyFileSize);
+              randomData.fill(Math.floor(Math.random() * 256));
+              fs.writeFileSync(this.keyFilePath, randomData);
+              fs.unlinkSync(this.keyFilePath);
+            }
 
-      if (fs.existsSync(this.metadataFilePath)) {
-        const metadataFileSize = fs.statSync(this.metadataFilePath).size;
-        const randomData = Buffer.alloc(metadataFileSize);
-        randomData.fill(Math.floor(Math.random() * 256));
-        fs.writeFileSync(this.metadataFilePath, randomData);
-        fs.unlinkSync(this.metadataFilePath);
-      }
+            if (fs.existsSync(this.metadataFilePath)) {
+              const metadataFileSize = fs.statSync(this.metadataFilePath).size;
+              const randomData = Buffer.alloc(metadataFileSize);
+              randomData.fill(Math.floor(Math.random() * 256));
+              fs.writeFileSync(this.metadataFilePath, randomData);
+              fs.unlinkSync(this.metadataFilePath);
+            }
 
-      // Clear master key from memory
-      if (process.env.REQUESTY_MASTER_KEY) {
-        delete process.env.REQUESTY_MASTER_KEY;
-      }
+            // Clear master key from memory
+            if (process.env.REQUESTY_MASTER_KEY) {
+              delete process.env.REQUESTY_MASTER_KEY;
+            }
 
-    } finally {
-      this.releaseLock();
-    }
+          } finally {
+            this.releaseLock();
+          }
+        } catch (error) {
+          ErrorHandler.handleSecurityError(error, 'API key removal', false);
+        }
+      },
+      'remove-api-key'
+    ).then(result => result.result);
   }
 
   /**

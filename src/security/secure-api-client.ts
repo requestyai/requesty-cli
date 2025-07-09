@@ -1,8 +1,11 @@
 import OpenAI from 'openai';
-import https from 'https';
-import crypto from 'crypto';
+import * as https from 'https';
+import * as crypto from 'crypto';
 import { SecureKeyManager } from './secure-key-manager';
 import { CryptoManager } from './crypto-manager';
+import { ErrorHandler } from '../utils/error-handler';
+import { InputValidator } from '../utils/input-validator';
+import { PerformanceMonitor } from '../utils/performance-monitor';
 
 /**
  * Ultra-secure API client with advanced security features
@@ -15,6 +18,10 @@ export class SecureApiClient {
   private static readonly RETRY_DELAY = 1000;
 
   constructor(baseURL: string, timeout: number = SecureApiClient.REQUEST_TIMEOUT) {
+    // Validate inputs
+    const validatedBaseURL = InputValidator.validateUrl(baseURL);
+    const validatedTimeout = InputValidator.validateNumber(timeout, 1000, 60000);
+    
     this.keyManager = new SecureKeyManager();
     
     // Create secure HTTPS agent
@@ -41,9 +48,9 @@ export class SecureApiClient {
     });
 
     this.openai = new OpenAI({
-      baseURL,
+      baseURL: validatedBaseURL,
       apiKey: 'placeholder', // Will be replaced with secure key
-      timeout,
+      timeout: validatedTimeout,
       httpAgent: httpsAgent,
       defaultHeaders: {
         'User-Agent': 'requesty-cli/2.0.0-secure',
@@ -57,22 +64,34 @@ export class SecureApiClient {
    * Initialize secure API client with authenticated key
    */
   async initialize(): Promise<void> {
-    const apiKey = await this.keyManager.getApiKey();
-    
-    // Create new client instance with secure headers
-    const secureHeaders = this.keyManager.createSecureHeaders(apiKey);
-    
-    this.openai = new OpenAI({
-      baseURL: this.openai.baseURL,
-      apiKey: apiKey,
-      timeout: this.openai.timeout,
-      defaultHeaders: {
-        'User-Agent': 'requesty-cli/2.0.0-secure',
-        'X-Client-Version': '2.0.0',
-        'X-Security-Level': 'high',
-        ...secureHeaders
-      }
-    });
+    return PerformanceMonitor.measureAsync(
+      async () => {
+        try {
+          const apiKey = await this.keyManager.getApiKey();
+          
+          // Validate API key
+          const validatedApiKey = InputValidator.validateApiKey(apiKey);
+          
+          // Create new client instance with secure headers
+          const secureHeaders = this.keyManager.createSecureHeaders(validatedApiKey);
+          
+          this.openai = new OpenAI({
+            baseURL: this.openai.baseURL,
+            apiKey: validatedApiKey,
+            timeout: this.openai.timeout,
+            defaultHeaders: {
+              'User-Agent': 'requesty-cli/2.0.0-secure',
+              'X-Client-Version': '2.0.0',
+              'X-Security-Level': 'high',
+              ...secureHeaders
+            }
+          });
+        } catch (error) {
+          ErrorHandler.handleSecurityError(error, 'API client initialization', true);
+        }
+      },
+      'secure-api-client-init'
+    ).then(result => result.result);
   }
 
   /**
@@ -80,56 +99,60 @@ export class SecureApiClient {
    */
   private async secureRequest<T>(
     requestFn: () => Promise<T>,
-    retries: number = SecureApiClient.MAX_RETRIES
+    retries: number = SecureApiClient.MAX_RETRIES,
+    operationName: string = 'secure-api-request'
   ): Promise<T> {
-    for (let attempt = 1; attempt <= retries; attempt++) {
-      try {
-        const startTime = Date.now();
-        const result = await requestFn();
-        const duration = Date.now() - startTime;
-        
-        // Log successful request (without sensitive data)
-        console.debug(`✅ Secure API request completed in ${duration}ms`);
-        
-        return result;
-        
-      } catch (error) {
-        const isLastAttempt = attempt === retries;
-        
-        if (error instanceof Error) {
-          // Handle specific error types
-          if (error.message.includes('401') || error.message.includes('403')) {
-            // Authentication error - don't retry
-            throw new Error('Authentication failed. Please check your API key.');
-          }
-          
-          if (error.message.includes('429')) {
-            // Rate limit - wait longer before retry
-            if (!isLastAttempt) {
-              await this.delay(SecureApiClient.RETRY_DELAY * attempt * 2);
-              continue;
+    return PerformanceMonitor.measureAsync(
+      async () => {
+        for (let attempt = 1; attempt <= retries; attempt++) {
+          try {
+            const result = await requestFn();
+            
+            // Log successful request (without sensitive data)
+            console.debug(`✅ Secure API request completed`);
+            
+            return result;
+            
+          } catch (error) {
+            const isLastAttempt = attempt === retries;
+            
+            if (error instanceof Error) {
+              // Handle specific error types
+              if (error.message.includes('401') || error.message.includes('403')) {
+                // Authentication error - don't retry
+                ErrorHandler.handleSecurityError(error, 'API authentication', true);
+              }
+              
+              if (error.message.includes('429')) {
+                // Rate limit - wait longer before retry
+                if (!isLastAttempt) {
+                  await this.delay(SecureApiClient.RETRY_DELAY * attempt * 2);
+                  continue;
+                }
+              }
+              
+              if (error.message.includes('timeout')) {
+                // Timeout error
+                if (!isLastAttempt) {
+                  await this.delay(SecureApiClient.RETRY_DELAY * attempt);
+                  continue;
+                }
+              }
             }
-          }
-          
-          if (error.message.includes('timeout')) {
-            // Timeout error
-            if (!isLastAttempt) {
-              await this.delay(SecureApiClient.RETRY_DELAY * attempt);
-              continue;
+            
+            if (isLastAttempt) {
+              ErrorHandler.handleApiError(error, `Secure API request (${operationName}) after ${retries} attempts`);
             }
+            
+            // Wait before retry
+            await this.delay(SecureApiClient.RETRY_DELAY * attempt);
           }
         }
         
-        if (isLastAttempt) {
-          throw error;
-        }
-        
-        // Wait before retry
-        await this.delay(SecureApiClient.RETRY_DELAY * attempt);
-      }
-    }
-    
-    throw new Error('Max retries exceeded');
+        throw new Error('Max retries exceeded');
+      },
+      operationName
+    ).then(result => result.result);
   }
 
   /**
@@ -139,7 +162,7 @@ export class SecureApiClient {
     return this.secureRequest(async () => {
       const response = await this.openai.models.list();
       return response.data;
-    });
+    }, SecureApiClient.MAX_RETRIES, 'get-models');
   }
 
   /**
@@ -153,18 +176,28 @@ export class SecureApiClient {
     max_tokens?: number;
   }): Promise<any> {
     return this.secureRequest(async () => {
+      // Validate and sanitize parameters
+      const validatedModel = InputValidator.validateModelName(params.model);
+      const validatedTemperature = params.temperature ? InputValidator.validateNumber(params.temperature, 0, 2) : 0.7;
+      const validatedMaxTokens = params.max_tokens ? InputValidator.validateNumber(params.max_tokens, 1, 8192) : undefined;
+      
+      // Validate messages array
+      if (!Array.isArray(params.messages) || params.messages.length === 0) {
+        throw new Error('Messages must be a non-empty array');
+      }
+      
       // Sanitize parameters
       const sanitizedParams = {
-        model: params.model,
+        model: validatedModel,
         messages: params.messages,
-        temperature: Math.max(0, Math.min(2, params.temperature || 0.7)),
+        temperature: validatedTemperature,
         stream: params.stream || false,
-        max_tokens: params.max_tokens ? Math.max(1, Math.min(8192, params.max_tokens)) : undefined
+        max_tokens: validatedMaxTokens
       };
 
       const response = await this.openai.chat.completions.create(sanitizedParams);
       return response;
-    });
+    }, SecureApiClient.MAX_RETRIES, 'chat-completion');
   }
 
   /**
@@ -177,29 +210,45 @@ export class SecureApiClient {
     max_tokens?: number;
   }): Promise<AsyncIterable<any>> {
     return this.secureRequest(async () => {
+      // Validate and sanitize parameters
+      const validatedModel = InputValidator.validateModelName(params.model);
+      const validatedTemperature = params.temperature ? InputValidator.validateNumber(params.temperature, 0, 2) : 0.7;
+      const validatedMaxTokens = params.max_tokens ? InputValidator.validateNumber(params.max_tokens, 1, 8192) : undefined;
+      
+      // Validate messages array
+      if (!Array.isArray(params.messages) || params.messages.length === 0) {
+        throw new Error('Messages must be a non-empty array');
+      }
+      
       const sanitizedParams = {
-        model: params.model,
+        model: validatedModel,
         messages: params.messages,
-        temperature: Math.max(0, Math.min(2, params.temperature || 0.7)),
+        temperature: validatedTemperature,
         stream: true,
-        max_tokens: params.max_tokens ? Math.max(1, Math.min(8192, params.max_tokens)) : undefined
+        max_tokens: validatedMaxTokens
       };
 
       const stream = await this.openai.chat.completions.create(sanitizedParams);
       return stream as AsyncIterable<any>;
-    });
+    }, SecureApiClient.MAX_RETRIES, 'streaming-chat-completion');
   }
 
   /**
    * Validate API key without exposing it
    */
   async validateApiKey(): Promise<boolean> {
-    try {
-      await this.getModels();
-      return true;
-    } catch (error) {
-      return false;
-    }
+    return PerformanceMonitor.measureAsync(
+      async () => {
+        try {
+          await this.getModels();
+          return true;
+        } catch (error) {
+          // Don't expose validation errors - just return false
+          return false;
+        }
+      },
+      'validate-api-key'
+    ).then(result => result.result);
   }
 
   /**

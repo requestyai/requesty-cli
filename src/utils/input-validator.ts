@@ -1,5 +1,5 @@
-import Joi from 'joi';
-import validator from 'validator';
+import * as Joi from 'joi';
+import * as validator from 'validator';
 import { ErrorHandler } from './error-handler';
 
 /**
