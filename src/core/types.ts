@@ -3,6 +3,17 @@ export interface ModelInfo {
   object: string;
   created: number;
   owned_by: string;
+  input_price?: number; // Price per token for input
+  caching_price?: number; // Price per token for caching
+  cached_price?: number; // Price per token for cached input
+  output_price?: number; // Price per token for output
+  max_output_tokens?: number;
+  context_window?: number;
+  supports_caching?: boolean;
+  supports_vision?: boolean;
+  supports_computer_use?: boolean;
+  supports_reasoning?: boolean;
+  description?: string;
 }
 
 export interface ChatMessage {
@@ -50,6 +61,9 @@ export interface ModelResult {
   totalTokens?: number;
   reasoningTokens?: number;
   tokensPerSecond?: number;
+  actualCost?: number; // Actual cost of the request in dollars
+  blendedCostPerMillion?: number; // Blended cost per million tokens
+  modelInfo?: ModelInfo; // Model pricing info
 }
 
 export interface CLIConfig {

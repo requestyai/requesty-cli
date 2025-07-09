@@ -5,9 +5,10 @@ import { RequestyAPI } from '../core/api';
 import { InteractiveUI } from '../ui/interactive-ui';
 import { StreamingClient } from '../core/streaming';
 import { DynamicResultsTable } from '../ui/dynamic-table';
-import { CLIConfig, ChatCompletionRequest } from '../core/types';
+import { CLIConfig, ChatCompletionRequest, ModelInfo } from '../core/types';
 import { DEFAULT_MODELS } from '../models/models';
 import { KeyManager } from '../utils/key-manager';
+import { PricingCalculator } from '../utils/pricing';
 
 const DEFAULT_CONFIG: CLIConfig = {
   baseURL: 'https://router.requesty.ai/v1',
@@ -21,6 +22,7 @@ class RequestyCLI {
   private ui: InteractiveUI;
   private config: CLIConfig;
   private keyManager: KeyManager;
+  private models: ModelInfo[] = [];
 
   constructor(config: CLIConfig) {
     this.config = config;
@@ -45,8 +47,8 @@ class RequestyCLI {
       }
 
       // Load available models
-      const models = await this.api.getModels();
-      await this.ui.initializeModels(models);
+      this.models = await this.api.getModels();
+      await this.ui.initializeModels(this.models);
 
       // Main interaction loop
       let running = true;
@@ -185,6 +187,24 @@ class RequestyCLI {
             ? totalTokens - inputTokens - outputTokens 
             : 0;
           
+          // Find model info for pricing
+          const modelInfo = this.models.find(m => m.id === model);
+          
+          // Calculate pricing
+          let actualCost = 0;
+          let blendedCostPerMillion = 0;
+          
+          if (modelInfo && (modelInfo.input_price || modelInfo.output_price)) {
+            const pricing = PricingCalculator.calculatePricing(
+              modelInfo,
+              inputTokens,
+              outputTokens,
+              reasoningTokens
+            );
+            actualCost = pricing.actualCost;
+            blendedCostPerMillion = pricing.blendedCostPerMillion;
+          }
+          
           resultsTable.updateModel(model, {
             status: 'completed',
             duration: result.duration,
@@ -192,6 +212,9 @@ class RequestyCLI {
             outputTokens,
             totalTokens,
             reasoningTokens,
+            actualCost,
+            blendedCostPerMillion,
+            modelInfo,
             response: result.response.choices[0]?.message?.content || 'No response',
             rawResponse: result.rawResponse
           });

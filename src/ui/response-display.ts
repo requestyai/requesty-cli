@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 import { ModelResult } from '../core/types';
+import { PricingCalculator } from '../utils/pricing';
 
 export class ResponseDisplay {
   
@@ -74,6 +75,17 @@ export class ResponseDisplay {
             console.log(chalk.gray(`    Usage: ${result.response.usage.prompt_tokens}+${result.response.usage.completion_tokens}=${result.response.usage.total_tokens} tokens`));
           } else {
             console.log(chalk.red(`    Usage: undefined`));
+          }
+          
+          // Show pricing info
+          if (result.actualCost !== undefined || result.blendedCostPerMillion !== undefined) {
+            const actualCost = result.actualCost !== undefined 
+              ? PricingCalculator.formatActualCost(result.actualCost)
+              : 'N/A';
+            const blendedCost = result.blendedCostPerMillion !== undefined 
+              ? PricingCalculator.formatCostPerMillion(result.blendedCostPerMillion)
+              : 'N/A';
+            console.log(chalk.gray(`    Pricing: ${actualCost} (${blendedCost})`));
           }
         }
       } else {

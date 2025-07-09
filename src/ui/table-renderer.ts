@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import Table from 'cli-table3';
 import { ModelResult } from '../core/types';
+import { PricingCalculator } from '../utils/pricing';
 
 export class TableRenderer {
   private table: Table.Table;
@@ -15,13 +16,13 @@ export class TableRenderer {
     if (isStreaming) {
       headers.push('Duration', 'Speed', 'Tokens');
     } else {
-      headers.push('Duration', 'Input Tokens', 'Output Tokens', 'Reasoning Tokens', 'Total Tokens');
+      headers.push('Duration', 'Input Tokens', 'Output Tokens', 'Reasoning Tokens', 'Total Tokens', 'Actual Cost', 'Blended $/M');
     }
 
     this.table = new Table({
       head: headers,
       style: { head: ['cyan'] },
-      colWidths: isStreaming ? [25, 12, 12, 12, 12] : [25, 12, 12, 12, 12, 12, 12]
+      colWidths: isStreaming ? [25, 12, 12, 12, 12] : [25, 12, 12, 12, 12, 12, 12, 12, 12]
     });
   }
 
@@ -76,6 +77,13 @@ export class TableRenderer {
           result.totalTokens ? result.totalTokens.toString() : '-'
         ]);
       } else {
+        const actualCost = result.actualCost !== undefined 
+          ? PricingCalculator.formatActualCost(result.actualCost)
+          : '-';
+        const blendedCost = result.blendedCostPerMillion !== undefined 
+          ? PricingCalculator.formatCostPerMillion(result.blendedCostPerMillion)
+          : '-';
+        
         this.table.push([
           result.model,
           statusText,
@@ -83,7 +91,9 @@ export class TableRenderer {
           result.inputTokens ? result.inputTokens.toString() : '-',
           result.outputTokens ? result.outputTokens.toString() : '-',
           result.reasoningTokens && result.reasoningTokens > 0 ? result.reasoningTokens.toString() : '-',
-          result.totalTokens ? result.totalTokens.toString() : '-'
+          result.totalTokens ? result.totalTokens.toString() : '-',
+          actualCost,
+          blendedCost
         ]);
       }
     });
