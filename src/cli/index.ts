@@ -35,7 +35,11 @@ class RequestyCLI {
     try {
       // Get API key if not provided
       if (!this.config.apiKey) {
-        this.config.apiKey = await this.keyManager.getApiKey();
+        // For debugging - use a temporary key
+        this.config.apiKey = process.env.REQUESTY_API_KEY || '<REQUESTY_API_KEY>';
+        if (this.config.apiKey === '<REQUESTY_API_KEY>') {
+          this.config.apiKey = await this.keyManager.getApiKey();
+        }
         // Update API instances with the key
         this.api = new RequestyAPI(this.config);
         this.streaming = new StreamingClient(this.config);

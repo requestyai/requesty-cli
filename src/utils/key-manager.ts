@@ -40,9 +40,6 @@ export class KeyManager {
           if (!input.trim()) {
             return 'API key cannot be empty';
           }
-          if (input.length < 10) {
-            return 'API key seems too short';
-          }
           return true;
         }
       }
