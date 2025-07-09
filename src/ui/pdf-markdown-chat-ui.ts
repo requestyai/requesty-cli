@@ -1,14 +1,14 @@
 import readline from 'readline';
 import chalk from 'chalk';
-import { PDFChatClient } from '../core/pdf-chat';
+import { PDFMarkdownChatClient } from '../core/pdf-markdown-chat';
 import { CLIConfig } from '../core/types';
 
-export class PDFChatUI {
+export class PDFMarkdownChatUI {
   private rl: readline.Interface;
-  private client: PDFChatClient;
+  private client: PDFMarkdownChatClient;
 
   constructor(config: CLIConfig) {
-    this.client = new PDFChatClient(config);
+    this.client = new PDFMarkdownChatClient(config);
     this.rl = readline.createInterface({
       input: process.stdin,
       output: process.stdout,
@@ -84,7 +84,6 @@ export class PDFChatUI {
       askQuestion();
     });
   }
-
 
   close(): void {
     this.rl.close();

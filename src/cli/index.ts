@@ -9,7 +9,7 @@ import { CLIConfig, ChatCompletionRequest, ModelInfo } from '../core/types';
 import { DEFAULT_MODELS } from '../models/models';
 import { KeyManager } from '../utils/key-manager';
 import { PricingCalculator } from '../utils/pricing';
-import { PDFChatUI } from '../ui/pdf-chat-ui';
+import { PDFMarkdownChatUI } from '../ui/pdf-markdown-chat-ui';
 
 const DEFAULT_CONFIG: CLIConfig = {
   baseURL: 'https://router.requesty.ai/v1',
@@ -101,11 +101,16 @@ class RequestyCLI {
 
   private async runPDFChat() {
     try {
+      // Ensure API key is set
+      if (!this.config.apiKey || this.config.apiKey === '<REQUESTY_API_KEY>') {
+        this.config.apiKey = await this.keyManager.getApiKey();
+      }
+      
       const pdfPath = await this.ui.getPDFPath();
       const model = await this.ui.getPDFModel();
       
-      const pdfChatUI = new PDFChatUI(this.config);
-      await pdfChatUI.startPDFChat(pdfPath, model);
+      const pdfMarkdownChatUI = new PDFMarkdownChatUI(this.config);
+      await pdfMarkdownChatUI.startPDFChat(pdfPath, model);
     } catch (error) {
       this.ui.showError(error instanceof Error ? error.message : 'Failed to start PDF chat');
     }
@@ -268,7 +273,7 @@ async function main() {
     .command('pdf-chat')
     .description('Chat with a PDF document using AI')
     .argument('<pdf-path>', 'Path to the PDF file to chat with')
-    .option('-m, --model <model>', 'AI model to use for chat', 'gpt-4o')
+    .option('-m, --model <model>', 'AI model to use for chat', 'openai/gpt-4o')
     .option('-k, --api-key <key>', 'API key for authentication')
     .option('-t, --timeout <ms>', 'Request timeout in milliseconds', '60000')
     .option('--temperature <temp>', 'Temperature for responses', '0.7')
@@ -280,8 +285,8 @@ async function main() {
         temperature: parseFloat(options.temperature)
       };
 
-      const pdfChatUI = new PDFChatUI(config);
-      await pdfChatUI.startPDFChat(pdfPath, options.model);
+      const pdfMarkdownChatUI = new PDFMarkdownChatUI(config);
+      await pdfMarkdownChatUI.startPDFChat(pdfPath, options.model);
     });
 
   // Default command (original functionality)

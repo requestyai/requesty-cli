@@ -177,23 +177,27 @@ export class InteractiveUI {
         choices: [
           {
             name: 'GPT-4o (OpenAI) - Recommended',
-            value: 'gpt-4o'
+            value: 'openai/gpt-4o'
           },
           {
-            name: 'GPT-4 Vision (OpenAI)',
-            value: 'gpt-4-vision-preview'
+            name: 'GPT-4.1 (OpenAI)',
+            value: 'openai/gpt-4.1'
+          },
+          {
+            name: 'Claude Sonnet 4 (Anthropic)',
+            value: 'anthropic/claude-sonnet-4-20250514'
           },
           {
             name: 'Claude 3.5 Sonnet (Anthropic)',
-            value: 'claude-3-5-sonnet-20241022'
+            value: 'anthropic/claude-3-5-sonnet-20241022'
           },
           {
-            name: 'Claude 3 Opus (Anthropic)',
-            value: 'claude-3-opus-20240229'
+            name: 'Gemini 2.5 Flash (Google)',
+            value: 'google/gemini-2.5-flash'
           },
           {
-            name: 'Gemini 1.5 Pro (Google)',
-            value: 'gemini-1.5-pro-latest'
+            name: 'Gemini 2.5 Pro (Google)',
+            value: 'google/gemini-2.5-pro'
           }
         ]
       }
