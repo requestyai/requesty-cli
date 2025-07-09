@@ -1,18 +1,4 @@
 import { CLIConfig, ChatCompletionRequest } from './types';
-export interface StreamChunk {
-    id: string;
-    object: string;
-    created: number;
-    model: string;
-    choices: {
-        index: number;
-        delta: {
-            content?: string;
-            role?: string;
-        };
-        finish_reason?: string;
-    }[];
-}
 export interface StreamingResult {
     success: boolean;
     fullResponse: string;
@@ -23,6 +9,7 @@ export interface StreamingResult {
 }
 export declare class StreamingClient {
     private config;
+    private openai;
     constructor(config: CLIConfig);
     streamCompletion(request: ChatCompletionRequest, onChunk: (chunk: string, stats: {
         tokensPerSecond: number;

@@ -1,26 +1,27 @@
-import axios, { AxiosResponse } from 'axios';
+import OpenAI from 'openai';
 import { ModelInfo, ChatCompletionRequest, ChatCompletionResponse, CLIConfig } from './types';
 
 export class RequestyAPI {
   private config: CLIConfig;
-  private axiosInstance;
+  private openai: OpenAI;
 
   constructor(config: CLIConfig) {
     this.config = config;
-    this.axiosInstance = axios.create({
+    this.openai = new OpenAI({
       baseURL: config.baseURL,
+      apiKey: config.apiKey || '<REQUESTY_API_KEY>',
       timeout: config.timeout,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(config.apiKey && { 'Authorization': `Bearer ${config.apiKey}` })
-      }
+      defaultHeaders: {
+        'HTTP-Referer': 'https://github.com/requestyai/requesty-cli',
+        'X-Title': 'requesty-cli',
+      },
     });
   }
 
   async getModels(): Promise<ModelInfo[]> {
     try {
-      const response: AxiosResponse<{ data: ModelInfo[] }> = await this.axiosInstance.get('/models');
-      return response.data.data;
+      const response = await this.openai.models.list();
+      return response.data;
     } catch (error) {
       throw new Error(`Failed to fetch models: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -28,12 +29,17 @@ export class RequestyAPI {
 
   async sendChatCompletion(request: ChatCompletionRequest): Promise<ChatCompletionResponse> {
     try {
-      const response: AxiosResponse<ChatCompletionResponse> = await this.axiosInstance.post('/chat/completions', request);
-      return response.data;
+      const response = await this.openai.chat.completions.create({
+        model: request.model,
+        messages: request.messages,
+        max_tokens: request.max_tokens,
+        temperature: request.temperature,
+        stream: request.stream || false,
+      });
+      return response as ChatCompletionResponse;
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const errorMessage = error.response?.data?.error?.message || error.message;
-        throw new Error(`API Error: ${errorMessage}`);
+      if (error instanceof OpenAI.APIError) {
+        throw new Error(`API Error: ${error.message}`);
       }
       throw new Error(`Network Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }

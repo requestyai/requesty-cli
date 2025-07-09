@@ -1,7 +1,7 @@
 import { ModelInfo, ChatCompletionRequest, ChatCompletionResponse, CLIConfig } from './types';
 export declare class RequestyAPI {
     private config;
-    private axiosInstance;
+    private openai;
     constructor(config: CLIConfig);
     getModels(): Promise<ModelInfo[]>;
     sendChatCompletion(request: ChatCompletionRequest): Promise<ChatCompletionResponse>;
