@@ -220,17 +220,6 @@ class RequestyCLI {
       } else {
         console.log('⚠️  Security Status: Standard (secure components unavailable)');
       }
-      console.log(`   Key Store Exists: ${securityStatus.keyStoreExists ? '✅ Yes' : '❌ No'}`);
-      console.log(`   Key Store Valid: ${securityStatus.keyStoreValid ? '✅ Yes' : '❌ No'}`);
-      console.log(`   Encryption Level: ${securityStatus.encryptionLevel}`);
-
-      if (secureConfig.keyStore) {
-        console.log('\n📊 Key Store Information:');
-        console.log(`   Version: ${secureConfig.keyStore.version}`);
-        console.log(`   Created: ${secureConfig.keyStore.created}`);
-        console.log(`   Algorithm: ${secureConfig.keyStore.algorithm}`);
-        console.log(`   Valid: ${secureConfig.keyStore.isValid ? '✅ Yes' : '❌ No'}`);
-      }
 
       console.log('\n🔐 Security Features:');
       console.log('   ✅ AES-256-CBC encryption');

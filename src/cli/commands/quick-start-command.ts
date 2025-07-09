@@ -83,7 +83,10 @@ export class QuickStartCommand extends BaseCommand {
   private async getModelsToTest(requestedModels: string[] | null): Promise<ModelInfo[]> {
     if (requestedModels) {
       // Use specified models
-      return requestedModels.map(name => this.api.getModelByName(name));
+      const models = requestedModels
+        .map(name => this.api.getModelByName(name))
+        .filter((model): model is ModelInfo => model !== null);
+      return models;
     }
 
     // Use default quick start models

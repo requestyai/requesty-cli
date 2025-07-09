@@ -258,12 +258,10 @@ class RefactoredRequestyCLI {
         model: 'gpt-4o-mini',
         temperature: this.config.temperature,
         includeSystemPrompt: true,
-        conversationHistory: [],
-        baseURL: this.config.baseURL,
-        timeout: this.config.timeout
+        conversationHistory: false
       };
 
-      const pdfChat = new PDFChatInterface(pdfConfig, this.config.apiKey!);
+      const pdfChat = new PDFChatInterface(this.config, pdfConfig);
       
       if (file) {
         const validatedFile = InputValidator.validateFilePath(file);
