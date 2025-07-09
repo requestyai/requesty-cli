@@ -7,6 +7,7 @@ import { createSpinner } from 'nanospinner';
 import Table from 'cli-table3';
 import { ModelProvider, categorizeModels, DEFAULT_MODELS, getProviderFromModel } from '../models/models';
 import { ModelInfo } from '../core/types';
+import { FileValidator } from '../utils/file-validator';
 
 export class InteractiveUI {
   private providers: Record<string, ModelProvider> = {};
@@ -40,7 +41,7 @@ export class InteractiveUI {
     console.log();
   }
 
-  async showMainMenu(): Promise<'quick' | 'select' | 'exit'> {
+  async showMainMenu(): Promise<'quick' | 'select' | 'pdf-chat' | 'exit'> {
     const { action } = await inquirer.prompt([
       {
         type: 'list',
@@ -54,6 +55,10 @@ export class InteractiveUI {
           {
             name: '🎯 Select Models',
             value: 'select'
+          },
+          {
+            name: '📄 Chat with PDF',
+            value: 'pdf-chat'
           },
           {
             name: '❌ Exit',
@@ -145,6 +150,56 @@ export class InteractiveUI {
     ]);
 
     return prompt;
+  }
+
+  async getPDFPath(): Promise<string> {
+    const { pdfPath } = await inquirer.prompt([
+      {
+        type: 'input',
+        name: 'pdfPath',
+        message: '📄 Enter the path to your PDF file:',
+        validate: (input: string) => {
+          const validation = FileValidator.validatePDF(input.trim());
+          return validation.valid ? true : validation.error!;
+        }
+      }
+    ]);
+
+    return pdfPath;
+  }
+
+  async getPDFModel(): Promise<string> {
+    const { model } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'model',
+        message: '🤖 Select AI model for PDF chat:',
+        choices: [
+          {
+            name: 'GPT-4o (OpenAI) - Recommended',
+            value: 'gpt-4o'
+          },
+          {
+            name: 'GPT-4 Vision (OpenAI)',
+            value: 'gpt-4-vision-preview'
+          },
+          {
+            name: 'Claude 3.5 Sonnet (Anthropic)',
+            value: 'claude-3-5-sonnet-20241022'
+          },
+          {
+            name: 'Claude 3 Opus (Anthropic)',
+            value: 'claude-3-opus-20240229'
+          },
+          {
+            name: 'Gemini 1.5 Pro (Google)',
+            value: 'gemini-1.5-pro-latest'
+          }
+        ]
+      }
+    ]);
+
+    return model;
   }
 
   showSelectedModels(models: string[]) {

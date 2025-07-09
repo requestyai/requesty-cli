@@ -58,7 +58,7 @@ export class PDFChatUI {
 
           // Check for help command
           if (trimmedInput.toLowerCase() === 'help') {
-            this.displayHelp();
+            this.client.displayHelp();
             askQuestion();
             return;
           }
@@ -85,14 +85,6 @@ export class PDFChatUI {
     });
   }
 
-  private displayHelp(): void {
-    console.log(chalk.cyan('\n📖 Available Commands:'));
-    console.log(chalk.gray('• Type any message to chat with the PDF'));
-    console.log(chalk.gray('• "info" - Display session information'));
-    console.log(chalk.gray('• "help" - Show this help message'));
-    console.log(chalk.gray('• "exit" or "quit" - End the session'));
-    console.log(chalk.gray('─'.repeat(50)));
-  }
 
   close(): void {
     this.rl.close();

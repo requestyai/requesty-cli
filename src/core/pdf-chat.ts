@@ -214,9 +214,15 @@ export class PDFChatClient {
   }
 
   displayGoodbye(): void {
-    console.log(chalk.green('\n👋 Thanks for using Requesty PDF Chat!'));
-    if (this.session) {
-      console.log(chalk.gray(`📊 Session summary: ${this.session.messages.length} messages exchanged`));
-    }
+    const messageCount = this.conversationManager ? this.conversationManager.getMessageCount() : 0;
+    ConsoleFormatter.printGoodbye(messageCount);
+  }
+
+  displayHelp(): void {
+    ConsoleFormatter.printHelp();
+  }
+
+  getConversationManager(): ConversationManager | null {
+    return this.conversationManager;
   }
 }

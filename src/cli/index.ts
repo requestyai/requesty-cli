@@ -63,12 +63,16 @@ class RequestyCLI {
           case 'select':
             await this.runCustomSelection();
             break;
+          case 'pdf-chat':
+            await this.runPDFChat();
+            running = false; // Exit after PDF chat session
+            break;
           case 'exit':
             running = false;
             break;
         }
 
-        if (running) {
+        if (running && action !== 'pdf-chat') {
           const continueSession = await this.ui.askContinue();
           if (!continueSession) {
             running = false;
@@ -93,6 +97,18 @@ class RequestyCLI {
     const useStreaming = await this.ui.getStreamingChoice();
     const prompt = await this.ui.getPrompt();
     await this.testModels(selectedModels, prompt, useStreaming);
+  }
+
+  private async runPDFChat() {
+    try {
+      const pdfPath = await this.ui.getPDFPath();
+      const model = await this.ui.getPDFModel();
+      
+      const pdfChatUI = new PDFChatUI(this.config);
+      await pdfChatUI.startPDFChat(pdfPath, model);
+    } catch (error) {
+      this.ui.showError(error instanceof Error ? error.message : 'Failed to start PDF chat');
+    }
   }
 
   private async testModels(models: string[], prompt: string, useStreaming: boolean) {
