@@ -207,7 +207,7 @@ export class PDFChatInterface {
 
   private displaySessionInfo(): void {
     const session = this.client.getSession();
-    if (!session) return;
+    if (!session) {return;}
 
     console.log(ConsoleFormatter.header('\n📊 Session Information:'));
     console.log(ConsoleFormatter.subheader(`📄 Document: ${session.pdfContent.filename}`));
@@ -222,7 +222,7 @@ export class PDFChatInterface {
 
   private displayConversationSummary(): void {
     const summary = this.client.getConversationSummary();
-    if (!summary) return;
+    if (!summary) {return;}
 
     console.log(ConsoleFormatter.header('\n📋 Conversation Summary:'));
     console.log(ConsoleFormatter.subheader(`💬 Total Messages: ${summary.totalMessages}`));

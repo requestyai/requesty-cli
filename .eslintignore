@@ -1,0 +1,9 @@
+dist/
+node_modules/
+coverage/
+test-results/
+*.js
+!jest.config.js
+!scripts/*.js
+.env*
+*.log

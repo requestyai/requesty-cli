@@ -16,11 +16,18 @@
     "build:watch": "tsc --watch",
     "start": "node dist/cli/index.js",
     "dev": "ts-node src/cli/index.ts",
-    "test": "jest",
+    "test": "node scripts/test-runner.js all",
+    "test:unit": "node scripts/test-runner.js unit",
+    "test:integration": "node scripts/test-runner.js integration",
+    "test:e2e": "node scripts/test-runner.js e2e",
+    "test:security": "node scripts/test-runner.js security",
+    "test:performance": "node scripts/test-runner.js performance",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "lint": "eslint 'src/**/*.{ts,tsx}' --fix",
-    "format": "prettier --write 'src/**/*.{ts,tsx,json,md}'",
+    "test:report": "node scripts/test-runner.js all --report",
+    "test:setup": "node scripts/setup-test-env.js",
+    "lint": "eslint src --ext .ts --fix",
+    "format": "prettier --write 'src/**/*.{ts,json,md}' 'tests/**/*.{ts,json,md}'",
     "audit": "npm audit --audit-level=moderate",
     "audit:fix": "npm audit fix",
     "audit:security": "npm audit --audit-level=high --production",
@@ -28,7 +35,8 @@
     "clean": "rm -rf dist node_modules package-lock.json",
     "reinstall": "npm run clean && npm install",
     "prepack": "npm run build",
-    "postinstall": "npm run audit:security"
+    "postinstall": "npm run audit:security",
+    "ci": "npm run build && npm run lint && npm run test && npm run audit:security"
   },
   "keywords": [
     "cli",
@@ -87,40 +95,6 @@
     "prettier": "^3.2.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.5"
-  },
-  "jest": {
-    "preset": "ts-jest",
-    "testEnvironment": "node",
-    "collectCoverageFrom": [
-      "src/**/*.{ts,tsx}",
-      "!src/**/*.d.ts"
-    ],
-    "coverageReporters": [
-      "text",
-      "lcov",
-      "html"
-    ],
-    "testMatch": [
-      "**/__tests__/**/*.{ts,tsx}",
-      "**/?(*.)+(spec|test).{ts,tsx}"
-    ]
-  },
-  "eslintConfig": {
-    "extends": [
-      "@typescript-eslint/recommended",
-      "plugin:security/recommended",
-      "prettier"
-    ],
-    "parser": "@typescript-eslint/parser",
-    "plugins": [
-      "@typescript-eslint",
-      "security"
-    ],
-    "rules": {
-      "security/detect-object-injection": "error",
-      "security/detect-non-literal-fs-filename": "error",
-      "security/detect-eval-with-expression": "error"
-    }
   },
   "prettier": {
     "semi": true,

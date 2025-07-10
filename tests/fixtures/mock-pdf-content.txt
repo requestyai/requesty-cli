@@ -1,0 +1,12 @@
+# Test PDF Document
+
+This is a test PDF document used for testing the PDF chat functionality.
+
+## Section 1: Introduction
+This document contains sample content for testing PDF parsing and chat features.
+
+## Section 2: Content
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+
+## Section 3: Conclusion
+This concludes the test document.

@@ -7,7 +7,6 @@ import { ErrorHandler } from './error-handler';
  * Provides sanitization and validation for all user inputs
  */
 export class InputValidator {
-  
   // Validation schemas
   private static readonly promptSchema = Joi.string()
     .min(1)
@@ -45,7 +44,7 @@ export class InputValidator {
     try {
       // Remove any potentially dangerous characters
       const sanitized = this.sanitizeInput(prompt);
-      
+
       // Validate against schema
       const { error, value } = this.promptSchema.validate(sanitized);
       if (error) {
@@ -126,7 +125,7 @@ export class InputValidator {
       }
 
       // Additional security checks
-      if (this.isLocalhost(value) && !this.isAllowedLocalhost(value)) {
+      if (this.isLocalhost(value) && !this.isAllowedLocalhost()) {
         throw new Error('Localhost URLs are not allowed');
       }
 
@@ -194,10 +193,14 @@ export class InputValidator {
    * @param max - Maximum allowed value
    * @returns Validated number
    */
-  static validateNumber(value: any, min: number = 0, max: number = Number.MAX_SAFE_INTEGER): number {
+  static validateNumber(
+    value: any,
+    min: number = 0,
+    max: number = Number.MAX_SAFE_INTEGER
+  ): number {
     try {
       const num = Number(value);
-      
+
       if (isNaN(num) || !isFinite(num)) {
         throw new Error('Invalid number format');
       }
@@ -240,10 +243,10 @@ export class InputValidator {
       /expression\s*\(/gi,
       /url\s*\(/gi,
       /import\s*\(/gi,
-      /require\s*\(/gi
+      /require\s*\(/gi,
     ];
 
-    return suspiciousPatterns.some(pattern => pattern.test(input));
+    return suspiciousPatterns.some((pattern) => pattern.test(input));
   }
 
   /**
@@ -260,10 +263,10 @@ export class InputValidator {
       /^your[_-]?api[_-]?key$/i,
       /^123+$/,
       /^abc+$/i,
-      /^xxx+$/i
+      /^xxx+$/i,
     ];
 
-    return fakePatterns.some(pattern => pattern.test(apiKey));
+    return fakePatterns.some((pattern) => pattern.test(apiKey));
   }
 
   /**
@@ -274,9 +277,11 @@ export class InputValidator {
   private static isLocalhost(url: string): boolean {
     try {
       const parsed = new URL(url);
-      return parsed.hostname === 'localhost' || 
-             parsed.hostname === '127.0.0.1' ||
-             parsed.hostname.endsWith('.local');
+      return (
+        parsed.hostname === 'localhost' ||
+        parsed.hostname === '127.0.0.1' ||
+        parsed.hostname.endsWith('.local')
+      );
     } catch {
       return false;
     }
@@ -284,10 +289,10 @@ export class InputValidator {
 
   /**
    * Check if localhost URL is allowed
-   * @param url - URL to check
+   * @param _url - URL to check (unused - allow all for development)
    * @returns True if allowed
    */
-  private static isAllowedLocalhost(url: string): boolean {
+  private static isAllowedLocalhost(): boolean {
     // Allow all localhost URLs for development
     return true;
   }
@@ -304,10 +309,10 @@ export class InputValidator {
       /\\\.\\./,
       /%2e%2e/i,
       /%2f/i,
-      /%5c/i
+      /%5c/i,
     ];
 
-    return traversalPatterns.some(pattern => pattern.test(path));
+    return traversalPatterns.some((pattern) => pattern.test(path));
   }
 
   /**
@@ -317,9 +322,24 @@ export class InputValidator {
    */
   private static hasSuspiciousExtension(filePath: string): boolean {
     const suspiciousExtensions = [
-      '.exe', '.bat', '.cmd', '.com', '.pif', '.scr',
-      '.vbs', '.js', '.jar', '.php', '.asp', '.aspx',
-      '.jsp', '.py', '.rb', '.pl', '.sh', '.bash'
+      '.exe',
+      '.bat',
+      '.cmd',
+      '.com',
+      '.pif',
+      '.scr',
+      '.vbs',
+      '.js',
+      '.jar',
+      '.php',
+      '.asp',
+      '.aspx',
+      '.jsp',
+      '.py',
+      '.rb',
+      '.pl',
+      '.sh',
+      '.bash',
     ];
 
     const extension = filePath.toLowerCase().split('.').pop();
@@ -333,11 +353,15 @@ export class InputValidator {
    * @param error - Error message if validation failed
    * @returns Validation result
    */
-  static createValidationResult(isValid: boolean, value?: any, error?: string): ValidationResult {
+  static createValidationResult(
+    isValid: boolean,
+    value?: any,
+    error?: string
+  ): ValidationResult {
     return {
       isValid,
       value,
-      error
+      error,
     };
   }
 
@@ -356,7 +380,11 @@ export class InputValidator {
     for (const [key, value] of Object.entries(inputs)) {
       const validator = validators[key];
       if (!validator) {
-        results[key] = this.createValidationResult(false, undefined, `No validator found for ${key}`);
+        results[key] = this.createValidationResult(
+          false,
+          undefined,
+          `No validator found for ${key}`
+        );
         continue;
       }
 
@@ -364,7 +392,8 @@ export class InputValidator {
         const validatedValue = validator(value);
         results[key] = this.createValidationResult(true, validatedValue);
       } catch (error) {
-        const message = error instanceof Error ? error.message : 'Validation failed';
+        const message =
+          error instanceof Error ? error.message : 'Validation failed';
         results[key] = this.createValidationResult(false, undefined, message);
       }
     }

@@ -1,5 +1,5 @@
-import { ChatMessage, PDFContent, PDFChatSession } from '../types/chat-types';
 import { PDF_EXPERT_SYSTEM_PROMPT } from '../prompts/system-prompt';
+import { ChatMessage, PDFChatSession } from '../types/chat-types';
 
 export class ConversationManager {
   private session: PDFChatSession;
@@ -16,14 +16,14 @@ export class ConversationManager {
       timestamp: new Date(),
       metadata: {
         type: 'system',
-        messageLength: PDF_EXPERT_SYSTEM_PROMPT.length
-      }
+        messageLength: PDF_EXPERT_SYSTEM_PROMPT.length,
+      },
     });
   }
 
   addUserQuestionWithPDF(question: string): void {
     const pdfContextMessage = this.formatPDFWithQuestion(question);
-    
+
     this.addMessage({
       role: 'user',
       content: pdfContextMessage,
@@ -31,8 +31,8 @@ export class ConversationManager {
       metadata: {
         type: 'pdf_upload',
         pdfIncluded: true,
-        messageLength: pdfContextMessage.length
-      }
+        messageLength: pdfContextMessage.length,
+      },
     });
   }
 
@@ -44,8 +44,8 @@ export class ConversationManager {
       metadata: {
         type: 'user_question',
         pdfIncluded: false,
-        messageLength: question.length
-      }
+        messageLength: question.length,
+      },
     });
   }
 
@@ -56,8 +56,8 @@ export class ConversationManager {
       timestamp: new Date(),
       metadata: {
         type: 'assistant_response',
-        messageLength: response.length
-      }
+        messageLength: response.length,
+      },
     });
   }
 
@@ -68,7 +68,7 @@ export class ConversationManager {
 
   private formatPDFWithQuestion(question: string): string {
     const { pdfContent } = this.session;
-    
+
     return `I have a PDF document that I need your expert analysis on. Here are the document details:
 
 **Document**: ${pdfContent.filename}
@@ -87,10 +87,10 @@ ${question}
 Please provide your expert analysis based on the document content above.`;
   }
 
-  getMessagesForAPI(): Array<{role: string; content: string}> {
-    return this.session.messages.map(msg => ({
+  getMessagesForAPI(): Array<{ role: string; content: string }> {
+    return this.session.messages.map((msg) => ({
       role: msg.role,
-      content: msg.content
+      content: msg.content,
     }));
   }
 
@@ -102,18 +102,18 @@ Please provide your expert analysis based on the document content above.`;
     pdfIncluded: boolean;
   } {
     const messages = this.session.messages;
-    
+
     return {
       totalMessages: messages.length,
-      userQuestions: messages.filter(m => m.role === 'user').length,
-      assistantResponses: messages.filter(m => m.role === 'assistant').length,
+      userQuestions: messages.filter((m) => m.role === 'user').length,
+      assistantResponses: messages.filter((m) => m.role === 'assistant').length,
       totalCharacters: messages.reduce((sum, m) => sum + m.content.length, 0),
-      pdfIncluded: messages.some(m => m.metadata?.pdfIncluded)
+      pdfIncluded: messages.some((m) => m.metadata?.pdfIncluded),
     };
   }
 
   getLastMessage(): ChatMessage | null {
-    return this.session.messages.length > 0 
+    return this.session.messages.length > 0
       ? this.session.messages[this.session.messages.length - 1]
       : null;
   }

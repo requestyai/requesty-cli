@@ -218,7 +218,7 @@ export class PDFChatClient {
   }
 
   isFirstQuestion(): boolean {
-    if (!this.conversationManager) return true;
+    if (!this.conversationManager) {return true;}
 
     const messages = this.conversationManager.getMessagesForAPI();
     // System prompt + user question with PDF = first question

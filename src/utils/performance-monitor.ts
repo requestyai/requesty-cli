@@ -27,7 +27,7 @@ export class PerformanceMonitor {
     if (!startTime) {
       throw new Error(`No measurement found for operation: ${operationId}`);
     }
-    
+
     const duration = Date.now() - startTime;
     this.measurements.delete(operationId);
     return duration;
@@ -43,14 +43,14 @@ export class PerformanceMonitor {
     operation: () => Promise<T>,
     operationName: string
   ): Promise<{ result: T; duration: number }> {
-    const startTime = this.startMeasurement(operationName);
-    
+    this.startMeasurement(operationName);
+
     try {
       const result = await operation();
       const duration = this.endMeasurement(operationName);
-      
+
       this.updateMetrics(operationName, duration, true);
-      
+
       return { result, duration };
     } catch (error) {
       const duration = this.endMeasurement(operationName);
@@ -69,14 +69,14 @@ export class PerformanceMonitor {
     operation: () => T,
     operationName: string
   ): { result: T; duration: number } {
-    const startTime = this.startMeasurement(operationName);
-    
+    this.startMeasurement(operationName);
+
     try {
       const result = operation();
       const duration = this.endMeasurement(operationName);
-      
+
       this.updateMetrics(operationName, duration, true);
-      
+
       return { result, duration };
     } catch (error) {
       const duration = this.endMeasurement(operationName);
@@ -91,7 +91,11 @@ export class PerformanceMonitor {
    * @param duration - Duration in milliseconds
    * @param success - Whether the operation succeeded
    */
-  private static updateMetrics(operationName: string, duration: number, success: boolean): void {
+  private static updateMetrics(
+    operationName: string,
+    duration: number,
+    success: boolean
+  ): void {
     const existing = this.metrics.get(operationName) || {
       totalCalls: 0,
       successfulCalls: 0,
@@ -100,7 +104,7 @@ export class PerformanceMonitor {
       averageDuration: 0,
       minDuration: Infinity,
       maxDuration: 0,
-      lastCall: 0
+      lastCall: 0,
     };
 
     existing.totalCalls++;
@@ -150,7 +154,7 @@ export class PerformanceMonitor {
    */
   static getReport(): string {
     const report = ['Performance Report', '================'];
-    
+
     for (const [operation, metrics] of this.metrics.entries()) {
       const successRate = (metrics.successfulCalls / metrics.totalCalls) * 100;
       report.push(`
@@ -163,7 +167,7 @@ Operation: ${operation}
   Last Call: ${new Date(metrics.lastCall).toISOString()}
 `);
     }
-    
+
     return report.join('\n');
   }
 }

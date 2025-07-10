@@ -176,7 +176,7 @@ export class ComparisonTable {
       r => r.prompt1.status === 'completed' && r.prompt2.status === 'completed'
     );
 
-    if (completedResults.length === 0) return;
+    if (completedResults.length === 0) {return;}
 
     console.log(chalk.cyan.bold('\n📊 Overall Comparison Summary:\n'));
 

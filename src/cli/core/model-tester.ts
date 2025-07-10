@@ -55,9 +55,9 @@ export class ModelTester {
 
   /**
    * Run quick start testing with default models
-   * @param availableModels - Array of available models (ignored - we use defaults)
+   * @param _availableModels - Array of available models (ignored - we use defaults)
    */
-  async runQuickStart(availableModels: ModelInfo[]): Promise<void> {
+  async runQuickStart(): Promise<void> {
     try {
       console.log('\n🚀 Quick Start - Testing 5 Default Models');
       console.log(

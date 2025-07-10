@@ -27,7 +27,7 @@ export class CacheManager {
         expiry: Date.now() + ttl,
         created: Date.now(),
         accessed: Date.now(),
-        accessCount: 1
+        accessCount: 1,
       };
 
       this.cache.set(key, entry);
@@ -44,7 +44,7 @@ export class CacheManager {
   get(key: string): any | null {
     try {
       const entry = this.cache.get(key);
-      
+
       if (!entry) {
         return null;
       }
@@ -71,7 +71,7 @@ export class CacheManager {
    */
   has(key: string): boolean {
     const entry = this.cache.get(key);
-    
+
     if (!entry) {
       return false;
     }
@@ -160,17 +160,19 @@ export class CacheManager {
   getStats(): CacheStats {
     const now = Date.now();
     const entries = Array.from(this.cache.entries());
-    const validEntries = entries.filter(([_, entry]) => entry.expiry > now);
-    const expiredEntries = entries.filter(([_, entry]) => entry.expiry <= now);
+    const validEntries = entries.filter(([, entry]) => entry.expiry > now);
+    const expiredEntries = entries.filter(([, entry]) => entry.expiry <= now);
 
     return {
       totalEntries: this.cache.size,
       validEntries: validEntries.length,
       expiredEntries: expiredEntries.length,
-      hitRate: this.calculateHitRate(validEntries.map(([_, entry]) => entry)),
-      averageAge: this.calculateAverageAge(validEntries.map(([_, entry]) => entry)),
+      hitRate: this.calculateHitRate(validEntries.map(([, entry]) => entry)),
+      averageAge: this.calculateAverageAge(
+        validEntries.map(([, entry]) => entry)
+      ),
       memoryUsage: this.estimateMemoryUsage(),
-      topKeys: this.getTopAccessedKeys(5)
+      topKeys: this.getTopAccessedKeys(5),
     };
   }
 
@@ -180,12 +182,17 @@ export class CacheManager {
    * @returns Hit rate percentage
    */
   private calculateHitRate(entries: CacheEntry[]): number {
-    if (entries.length === 0) return 0;
-    
-    const totalAccesses = entries.reduce((sum, entry) => sum + entry.accessCount, 0);
+    if (entries.length === 0) {
+      return 0;
+    }
+
+    const totalAccesses = entries.reduce(
+      (sum, entry) => sum + entry.accessCount,
+      0
+    );
     const uniqueEntries = entries.length;
-    
-    return uniqueEntries > 0 ? (totalAccesses / uniqueEntries) : 0;
+
+    return uniqueEntries > 0 ? totalAccesses / uniqueEntries : 0;
   }
 
   /**
@@ -194,11 +201,16 @@ export class CacheManager {
    * @returns Average age in milliseconds
    */
   private calculateAverageAge(entries: CacheEntry[]): number {
-    if (entries.length === 0) return 0;
-    
+    if (entries.length === 0) {
+      return 0;
+    }
+
     const now = Date.now();
-    const totalAge = entries.reduce((sum, entry) => sum + (now - entry.created), 0);
-    
+    const totalAge = entries.reduce(
+      (sum, entry) => sum + (now - entry.created),
+      0
+    );
+
     return totalAge / entries.length;
   }
 
@@ -208,13 +220,13 @@ export class CacheManager {
    */
   private estimateMemoryUsage(): number {
     let totalSize = 0;
-    
+
     for (const [key, entry] of this.cache.entries()) {
       totalSize += key.length * 2; // UTF-16 encoding
       totalSize += JSON.stringify(entry.data).length * 2;
       totalSize += 64; // Overhead for entry object
     }
-    
+
     return totalSize;
   }
 
@@ -223,12 +235,14 @@ export class CacheManager {
    * @param limit - Number of top keys to return
    * @returns Array of top accessed keys with their access counts
    */
-  private getTopAccessedKeys(limit: number): Array<{ key: string; accessCount: number }> {
+  private getTopAccessedKeys(
+    limit: number
+  ): Array<{ key: string; accessCount: number }> {
     const entries = Array.from(this.cache.entries())
       .map(([key, entry]) => ({ key, accessCount: entry.accessCount }))
       .sort((a, b) => b.accessCount - a.accessCount)
       .slice(0, limit);
-    
+
     return entries;
   }
 
@@ -250,7 +264,7 @@ export class CacheManager {
    */
   private cleanup(): void {
     const now = Date.now();
-    
+
     for (const [key, entry] of this.cache.entries()) {
       if (entry.expiry < now) {
         this.cache.delete(key);

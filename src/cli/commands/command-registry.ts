@@ -256,8 +256,8 @@ export class CommandRegistry {
         const aStarts = a.startsWith(partialName);
         const bStarts = b.startsWith(partialName);
         
-        if (aStarts && !bStarts) return -1;
-        if (!aStarts && bStarts) return 1;
+        if (aStarts && !bStarts) {return -1;}
+        if (!aStarts && bStarts) {return 1;}
         
         return a.localeCompare(b);
       });

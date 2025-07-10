@@ -22,13 +22,13 @@ export abstract class BaseCommand {
    */
   async execute(args: any[] = []): Promise<void> {
     const operationId = `command-${this.commandName}-${Date.now()}`;
-    
+
     try {
       const { result } = await PerformanceMonitor.measureAsync(
         () => this.run(args),
         operationId
       );
-      
+
       await this.onSuccess(result);
     } catch (error) {
       await this.onError(error);
@@ -72,9 +72,10 @@ export abstract class BaseCommand {
 
   /**
    * Handle successful command execution
-   * @param result - Command result
+   * @param _result - Command result (unused in base implementation)
    */
-  protected async onSuccess(result: any): Promise<void> {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  protected async onSuccess(_result: any): Promise<void> {
     // Default implementation - subclasses can override
   }
 
@@ -195,7 +196,7 @@ export abstract class BaseCommand {
   protected log(message: string, level: 'info' | 'warn' | 'error' = 'info'): void {
     const timestamp = new Date().toISOString();
     const logMessage = `[${timestamp}] [${this.commandName}] ${message}`;
-    
+
     switch (level) {
       case 'info':
         console.log(logMessage);

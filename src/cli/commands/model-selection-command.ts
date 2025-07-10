@@ -1,9 +1,9 @@
-import { BaseCommand } from './base-command';
 import { RequestyAPI } from '../../core/api';
-import { TerminalUI } from '../../ui/terminal-ui';
 import { ModelInfo } from '../../core/types';
+import { TerminalUI } from '../../ui/terminal-ui';
 import { ErrorHandler } from '../../utils/error-handler';
 import { InputValidator } from '../../utils/input-validator';
+import { BaseCommand } from './base-command';
 
 /**
  * Model selection command for interactive model testing
@@ -28,30 +28,41 @@ export class ModelSelectionCommand extends BaseCommand {
     try {
       // Parse arguments
       const { category, filter, interactive } = this.parseArgs(args);
-      
+
       // Get available models
       const availableModels = await this.getAvailableModels(category, filter);
-      
+
       // Display model selection interface
       await this.displayModelSelection(availableModels);
-      
+
       // Get user selection
-      const selectedModels = await this.getModelSelection(availableModels, interactive);
-      
+      const selectedModels = await this.getModelSelection(
+        availableModels,
+        interactive
+      );
+
       // Get prompt from user
       const prompt = await this.ui.getPrompt();
       const validatedPrompt = InputValidator.validatePrompt(prompt);
-      
+
       // Get streaming preference
       const streaming = await this.ui.getStreamingPreference();
-      
+
       // Test selected models
-      const results = await this.testSelectedModels(selectedModels, validatedPrompt, streaming);
-      
+      const results = await this.testSelectedModels(
+        selectedModels,
+        validatedPrompt,
+        streaming
+      );
+
       // Display results
       await this.displayResults(results);
-      
-      return this.createResult(true, results, 'Model selection completed successfully');
+
+      return this.createResult(
+        true,
+        results,
+        'Model selection completed successfully'
+      );
     } catch (error) {
       ErrorHandler.handleApiError(error, 'Model selection command');
     }
@@ -64,11 +75,11 @@ export class ModelSelectionCommand extends BaseCommand {
    */
   private parseArgs(args: any[]): ModelSelectionArgs {
     const [category, filter, interactive] = args;
-    
+
     return {
       category: category ? this.validateString(category, 'category') : null,
       filter: filter ? this.validateString(filter, 'filter') : null,
-      interactive: interactive !== 'false' && interactive !== false
+      interactive: interactive !== 'false' && interactive !== false,
     };
   }
 
@@ -83,23 +94,24 @@ export class ModelSelectionCommand extends BaseCommand {
     filter: string | null
   ): Promise<ModelInfo[]> {
     let models = this.api.getAvailableModels();
-    
+
     // Filter by category
     if (category) {
-      models = models.filter(model => 
+      models = models.filter((model) =>
         model.provider.toLowerCase().includes(category.toLowerCase())
       );
     }
-    
+
     // Filter by text
     if (filter) {
       const filterLower = filter.toLowerCase();
-      models = models.filter(model => 
-        model.name.toLowerCase().includes(filterLower) ||
-        model.provider.toLowerCase().includes(filterLower)
+      models = models.filter(
+        (model) =>
+          model.name.toLowerCase().includes(filterLower) ||
+          model.provider.toLowerCase().includes(filterLower)
       );
     }
-    
+
     return models;
   }
 
@@ -109,25 +121,29 @@ export class ModelSelectionCommand extends BaseCommand {
    */
   private async displayModelSelection(models: ModelInfo[]): Promise<void> {
     this.ui.displayHeader('🎯 Model Selection');
-    
+
     // Group models by provider
     const groupedModels = this.groupModelsByProvider(models);
-    
+
     // Display each provider group
     for (const [provider, providerModels] of Object.entries(groupedModels)) {
       this.ui.displayInfo(`\n📦 ${provider} Models:`);
-      
+
       const tableData = providerModels.map((model, index) => ({
         '#': index + 1,
-        'Model': model.name,
-        'Context': model.contextWindow ? `${model.contextWindow.toLocaleString()} tokens` : 'N/A',
-        'Price': model.pricing ? `$${model.pricing.input}/M in, $${model.pricing.output}/M out` : 'N/A',
-        'Features': this.getModelFeatures(model)
+        Model: model.name,
+        Context: model.contextWindow
+          ? `${model.contextWindow.toLocaleString()} tokens`
+          : 'N/A',
+        Price: model.pricing
+          ? `$${model.pricing.input}/M in, $${model.pricing.output}/M out`
+          : 'N/A',
+        Features: this.getModelFeatures(model),
       }));
-      
+
       this.ui.displayTable(tableData);
     }
-    
+
     this.ui.displayInfo(`\n📊 Total models available: ${models.length}`);
   }
 
@@ -136,15 +152,20 @@ export class ModelSelectionCommand extends BaseCommand {
    * @param models - Models to group
    * @returns Grouped models
    */
-  private groupModelsByProvider(models: ModelInfo[]): Record<string, ModelInfo[]> {
-    return models.reduce((groups, model) => {
-      const provider = model.provider;
-      if (!groups[provider]) {
-        groups[provider] = [];
-      }
-      groups[provider].push(model);
-      return groups;
-    }, {} as Record<string, ModelInfo[]>);
+  private groupModelsByProvider(
+    models: ModelInfo[]
+  ): Record<string, ModelInfo[]> {
+    return models.reduce(
+      (groups, model) => {
+        const provider = model.provider;
+        if (!groups[provider]) {
+          groups[provider] = [];
+        }
+        groups[provider].push(model);
+        return groups;
+      },
+      {} as Record<string, ModelInfo[]>
+    );
   }
 
   /**
@@ -154,12 +175,20 @@ export class ModelSelectionCommand extends BaseCommand {
    */
   private getModelFeatures(model: ModelInfo): string {
     const features = [];
-    
-    if (model.supportsVision) features.push('Vision');
-    if (model.supportsJson) features.push('JSON');
-    if (model.supportsStreaming) features.push('Streaming');
-    if (model.supportsTools) features.push('Tools');
-    
+
+    if (model.supportsVision) {
+      features.push('Vision');
+    }
+    if (model.supportsJson) {
+      features.push('JSON');
+    }
+    if (model.supportsStreaming) {
+      features.push('Streaming');
+    }
+    if (model.supportsTools) {
+      features.push('Tools');
+    }
+
     return features.join(', ') || 'Basic';
   }
 
@@ -177,24 +206,24 @@ export class ModelSelectionCommand extends BaseCommand {
       // Return default selection
       return models.slice(0, 5);
     }
-    
+
     // Interactive selection
-    const choices = models.map((model, index) => ({
+    const choices = models.map((model) => ({
       name: `${model.name} (${model.provider})`,
       value: model,
-      short: model.name
+      short: model.name,
     }));
-    
+
     const selectedModels = await this.ui.selectMultipleModels(choices);
-    
+
     if (selectedModels.length === 0) {
       throw new Error('No models selected');
     }
-    
+
     if (selectedModels.length > 10) {
       throw new Error('Too many models selected (maximum 10)');
     }
-    
+
     return selectedModels;
   }
 
@@ -211,20 +240,20 @@ export class ModelSelectionCommand extends BaseCommand {
     streaming: boolean
   ): Promise<ModelSelectionResult[]> {
     this.ui.displayInfo(`\n🔄 Testing ${models.length} selected models...`);
-    
+
     // Create progress indicator
     const progressCallback = (completed: number, total: number) => {
       const percentage = Math.round((completed / total) * 100);
       this.ui.displayProgress(`Testing models... ${percentage}%`);
     };
-    
+
     // Test models with progress tracking
     const results: ModelSelectionResult[] = [];
-    
+
     for (let i = 0; i < models.length; i++) {
       const model = models[i];
       progressCallback(i, models.length);
-      
+
       try {
         const result = await this.api.testModel(model, prompt, streaming);
         results.push({
@@ -233,7 +262,7 @@ export class ModelSelectionCommand extends BaseCommand {
           success: true,
           result,
           error: null,
-          features: this.getModelFeatures(model)
+          features: this.getModelFeatures(model),
         });
       } catch (error) {
         results.push({
@@ -242,13 +271,13 @@ export class ModelSelectionCommand extends BaseCommand {
           success: false,
           result: null,
           error: error instanceof Error ? error.message : 'Unknown error',
-          features: this.getModelFeatures(model)
+          features: this.getModelFeatures(model),
         });
       }
     }
-    
+
     progressCallback(models.length, models.length);
-    
+
     return results;
   }
 
@@ -258,48 +287,59 @@ export class ModelSelectionCommand extends BaseCommand {
    */
   private async displayResults(results: ModelSelectionResult[]): Promise<void> {
     this.ui.displayHeader('📊 Model Selection Results');
-    
+
     // Sort results by success and response time
     const sortedResults = results.sort((a, b) => {
-      if (a.success && !b.success) return -1;
-      if (!a.success && b.success) return 1;
+      if (a.success && !b.success) {
+        return -1;
+      }
+      if (!a.success && b.success) {
+        return 1;
+      }
       if (a.success && b.success) {
         return (a.result?.duration || 0) - (b.result?.duration || 0);
       }
       return 0;
     });
-    
+
     // Display results table
-    const tableData = sortedResults.map(r => ({
-      'Model': r.model,
-      'Provider': r.provider,
-      'Status': r.success ? '✅ Success' : '❌ Failed',
+    const tableData = sortedResults.map((r) => ({
+      Model: r.model,
+      Provider: r.provider,
+      Status: r.success ? '✅ Success' : '❌ Failed',
       'Response Time': r.success ? `${r.result?.duration || 0}ms` : 'N/A',
-      'Tokens': r.success ? r.result?.usage?.total_tokens || 0 : 'N/A',
-      'Cost': r.success && r.result?.cost ? `$${r.result.cost.toFixed(4)}` : 'N/A',
-      'Features': r.features
+      Tokens: r.success ? r.result?.usage?.total_tokens || 0 : 'N/A',
+      Cost:
+        r.success && r.result?.cost ? `$${r.result.cost.toFixed(4)}` : 'N/A',
+      Features: r.features,
     }));
-    
+
     this.ui.displayTable(tableData);
-    
+
     // Display summary
-    const successful = results.filter(r => r.success);
-    const failed = results.filter(r => !r.success);
-    
-    this.ui.displayInfo(`\n📈 Summary: ${successful.length} successful, ${failed.length} failed`);
-    
+    const successful = results.filter((r) => r.success);
+    const failed = results.filter((r) => !r.success);
+
+    this.ui.displayInfo(
+      `\n📈 Summary: ${successful.length} successful, ${failed.length} failed`
+    );
+
     // Display fastest model
     if (successful.length > 0) {
-      const fastest = successful.reduce((prev, curr) => 
-        (prev.result?.duration || 0) < (curr.result?.duration || 0) ? prev : curr
+      const fastest = successful.reduce((prev, curr) =>
+        (prev.result?.duration || 0) < (curr.result?.duration || 0)
+          ? prev
+          : curr
       );
-      this.ui.displaySuccess(`🏆 Fastest model: ${fastest.model} (${fastest.result?.duration}ms)`);
+      this.ui.displaySuccess(
+        `🏆 Fastest model: ${fastest.model} (${fastest.result?.duration}ms)`
+      );
     }
-    
+
     // Display error details if any
     if (failed.length > 0) {
       this.ui.displayError('\n❌ Failed Tests:');
-      failed.forEach(r => {
+      failed.forEach((r) => {
         this.ui.displayError(`${r.model}: ${r.error}`);
       });
     }

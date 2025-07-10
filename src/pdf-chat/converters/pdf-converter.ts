@@ -26,7 +26,7 @@ export class PDFConverter {
   }
 
   private static formatAsMarkdown(text: string): string {
-    let markdown = text
+    const markdown = text
       .replace(/\r\n/g, '\n')
       .replace(/\r/g, '\n')
       .replace(/\n{3,}/g, '\n\n')

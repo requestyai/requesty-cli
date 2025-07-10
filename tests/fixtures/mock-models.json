@@ -1,0 +1,22 @@
+{
+  "models": [
+    {
+      "id": "test-model-1",
+      "object": "model",
+      "created": 1234567890,
+      "owned_by": "test-provider",
+      "permission": [],
+      "root": "test-model-1",
+      "parent": null
+    },
+    {
+      "id": "test-model-2",
+      "object": "model",
+      "created": 1234567891,
+      "owned_by": "test-provider",
+      "permission": [],
+      "root": "test-model-2",
+      "parent": null
+    }
+  ]
+}

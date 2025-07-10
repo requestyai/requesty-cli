@@ -17,8 +17,8 @@ import { CLIConfig } from '../core/types';
 import { CLIOrchestrator } from './core/cli-orchestrator';
 
 // PDF chat functionality
-import { PDFChatInterface } from '../pdf-chat/ui/chat-interface';
 import { PDFChatConfig } from '../pdf-chat/types/chat-types';
+import { PDFChatInterface } from '../pdf-chat/ui/chat-interface';
 
 /**
  * Default configuration for the CLI
@@ -27,7 +27,7 @@ const DEFAULT_CONFIG: CLIConfig = {
   baseURL: 'http://localhost:40000/v1',
   timeout: 60000,
   temperature: 0.7,
-  apiKey: process.env.REQUESTY_API_KEY
+  apiKey: process.env.REQUESTY_API_KEY,
 };
 
 /**
@@ -65,12 +65,15 @@ class RequestyCLI {
  * @param temperature - Temperature setting
  * @returns PDF chat configuration object
  */
-function createPDFChatConfig(model: string, temperature: number): PDFChatConfig {
+function createPDFChatConfig(
+  model: string,
+  temperature: number
+): PDFChatConfig {
   return {
     model,
     temperature,
     includeSystemPrompt: true,
-    conversationHistory: true
+    conversationHistory: true,
   };
 }
 
@@ -84,7 +87,12 @@ async function main(): Promise<void> {
   program
     .name('requesty')
     .description('Interactive AI Model Testing CLI with Streaming')
-    .version('2.0.0');
+    .version('1.0.0')
+    .exitOverride() // Don't call process.exit() directly
+    .configureOutput({
+      writeErr: (str) => process.stderr.write(str),
+      writeOut: (str) => process.stdout.write(str),
+    });
 
   // Security status command
   program
@@ -109,11 +117,14 @@ async function main(): Promise<void> {
         ...DEFAULT_CONFIG,
         apiKey: options.apiKey || process.env.REQUESTY_API_KEY,
         timeout: parseInt(options.timeout),
-        temperature: parseFloat(options.temperature)
+        temperature: parseFloat(options.temperature),
       };
 
       // Create PDF chat configuration and interface
-      const pdfChatConfig = createPDFChatConfig(options.model, parseFloat(options.temperature));
+      const pdfChatConfig = createPDFChatConfig(
+        options.model,
+        parseFloat(options.temperature)
+      );
       const pdfChatInterface = new PDFChatInterface(config, pdfChatConfig);
 
       await pdfChatInterface.start(pdfPath);
@@ -129,14 +140,29 @@ async function main(): Promise<void> {
         ...DEFAULT_CONFIG,
         apiKey: options.apiKey || process.env.REQUESTY_API_KEY,
         timeout: parseInt(options.timeout),
-        temperature: parseFloat(options.temperature)
+        temperature: parseFloat(options.temperature),
       };
 
       const orchestrator = new CLIOrchestrator(config);
       await orchestrator.run();
     });
 
-  program.parse();
+  try {
+    program.parse();
+  } catch (err: any) {
+    // Handle Commander.js errors properly
+    if (err.code === 'commander.unknownCommand') {
+      console.error(`Unknown command: ${err.message}`);
+      process.exit(1);
+    } else if (err.code === 'commander.help') {
+      process.exit(0);
+    } else if (err.code === 'commander.version') {
+      process.exit(0);
+    } else {
+      console.error('Error:', err.message);
+      process.exit(1);
+    }
+  }
 }
 
 // Export legacy class for backwards compatibility

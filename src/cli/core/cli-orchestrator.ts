@@ -176,7 +176,7 @@ export class CLIOrchestrator {
    * @private
    */
   private async handleQuickStart(): Promise<void> {
-    await this.modelTester.runQuickStart(this.models);
+    await this.modelTester.runQuickStart();
   }
 
   /**
