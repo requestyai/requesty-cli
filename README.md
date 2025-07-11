@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js Version](https://img.shields.io/node/v/requesty-cli.svg)](https://nodejs.org)
 
-![Requesty CLI Demo](https://raw.githubusercontent.com/thibaultjaigu/requesty-cli/main/assets/demo.gif)
+![Requesty CLI Demo](https://raw.githubusercontent.com/requestyai/requesty-cli/main/assets/demo.gif)
 
 This repository contains the Requesty CLI, a command-line AI workflow tool that connects to multiple AI models, enabling model comparison, interactive chat, and intelligent PDF document analysis.
 
@@ -96,12 +96,14 @@ requesty pdf-chat research-paper.pdf
 ## 🎯 Features
 
 ### Model Comparison
+
 - **Side-by-side testing** of multiple AI models
 - **Streaming responses** with real-time output
 - **Performance metrics** including response time, token usage, and cost
 - **Customizable model selection** from 100+ available models
 
 ### Interactive Chat
+
 - **Continuous conversations** with context retention
 - **Featured models** with smart categorization
 - **Recent models** sorted by creation date
@@ -109,12 +111,14 @@ requesty pdf-chat research-paper.pdf
 - **Feedback system** to improve response quality
 
 ### PDF Analysis
+
 - **Intelligent document parsing** with markdown conversion
 - **Context-aware responses** based on document content
 - **Multi-turn conversations** about your documents
 - **Support for complex PDFs** including technical papers and reports
 
 ### Security & Performance
+
 - **Secure API key storage** with encryption
 - **Rate limiting** and request management
 - **Response caching** for improved performance
@@ -123,11 +127,13 @@ requesty pdf-chat research-paper.pdf
 ## 🛠️ Commands
 
 ### Interactive Mode
+
 ```bash
 requesty                    # Start interactive menu
 ```
 
 ### Direct Commands
+
 ```bash
 requesty chat [model]       # Start chat session
 requesty pdf-chat <file>    # Analyze PDF document
@@ -136,6 +142,7 @@ requesty --help            # Show help information
 ```
 
 ### Command Options
+
 ```bash
 # Global options
 -k, --api-key <key>        # API key for authentication
@@ -152,6 +159,7 @@ requesty pdf-chat document.pdf --model openai/gpt-4o
 ## 🔧 Configuration
 
 ### Environment Variables
+
 ```bash
 REQUESTY_API_KEY="your-api-key"    # Your Requesty API key
 DEBUG=true                         # Enable debug logging
@@ -172,6 +180,7 @@ The CLI supports models from multiple providers:
 ## 🚀 Popular Workflows
 
 ### Development Assistant
+
 ```bash
 > Help me refactor this function to use async/await
 > Write unit tests for the authentication module
@@ -179,6 +188,7 @@ The CLI supports models from multiple providers:
 ```
 
 ### Document Research
+
 ```bash
 requesty pdf-chat specification.pdf
 > Summarize the technical requirements
@@ -187,6 +197,7 @@ requesty pdf-chat specification.pdf
 ```
 
 ### Learning & Exploration
+
 ```bash
 > Explain the differences between TCP and UDP
 > Show me examples of Python decorators
@@ -194,6 +205,7 @@ requesty pdf-chat specification.pdf
 ```
 
 ### Content Creation
+
 ```bash
 > Write a professional email declining a meeting
 > Create a README template for my project
@@ -203,18 +215,21 @@ requesty pdf-chat specification.pdf
 ## 📦 Installation Options
 
 ### Global Installation (Recommended)
+
 ```bash
 npm install -g requesty-cli
 ```
 
 ### Local Project Installation
+
 ```bash
 npm install --save-dev requesty-cli
 ```
 
 ### Development Setup
+
 ```bash
-git clone https://github.com/thibaultjaigu/requesty-cli
+git clone https://github.com/requestyai/requesty-cli
 cd requesty-cli
 npm install
 npm run build
@@ -224,6 +239,7 @@ npm link
 ## 🔍 Troubleshooting
 
 ### API Key Issues
+
 ```bash
 # Check if key is set
 echo $REQUESTY_API_KEY
@@ -236,11 +252,13 @@ echo 'export REQUESTY_API_KEY="your-key"' >> ~/.bashrc
 ```
 
 ### Connection Problems
+
 - Ensure you have an active internet connection
 - Check if you're behind a corporate firewall
 - Verify the API endpoint is accessible: `curl https://router.requesty.ai/v1/models`
 
 ### Performance Tips
+
 - Use streaming mode for faster perceived responses
 - Select appropriate models for your use case (smaller models for simple tasks)
 - Enable response caching for repeated queries
@@ -250,6 +268,7 @@ echo 'export REQUESTY_API_KEY="your-key"' >> ~/.bashrc
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
 ### Development
+
 ```bash
 # Install dependencies
 npm install
@@ -272,7 +291,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **Website**: [requesty.ai](https://requesty.ai)
 - **Documentation**: [docs.requesty.ai](https://docs.requesty.ai)
-- **API Reference**: [api.requesty.ai](https://api.requesty.ai)
 - **Support**: [support@requesty.ai](mailto:support@requesty.ai)
 
 ## 🙏 Acknowledgments

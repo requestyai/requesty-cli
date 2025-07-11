@@ -5,14 +5,17 @@
  * @copyright 2024 Requesty CLI Contributors
  */
 
-import { BaseCommand } from './base-command';
-import { RequestyAPI } from '../../core/api';
-import { TerminalUI } from '../../ui/terminal-ui';
-import { CLIConfig, ModelInfo } from '../../core/types';
-import { ErrorHandler } from '../../utils/error-handler';
-import { ChatInterface } from '../../chat/ui/chat-interface';
+import {
+  DEFAULT_SYSTEM_PROMPT,
+  getDefaultChatModel,
+} from '../../chat/config/featured-models';
 import { ChatConfig } from '../../chat/types/chat-types';
-import { getDefaultChatModel, DEFAULT_SYSTEM_PROMPT } from '../../chat/config/featured-models';
+import { ChatInterface } from '../../chat/ui/chat-interface';
+import { RequestyAPI } from '../../core/api';
+import { CLIConfig } from '../../core/types';
+import { TerminalUI } from '../../ui/terminal-ui';
+import { ErrorHandler } from '../../utils/error-handler';
+import { BaseCommand } from './base-command';
 
 /**
  * Chat command for interactive AI conversations
@@ -53,7 +56,11 @@ export class ChatCommand extends BaseCommand {
       };
 
       // Create and start chat interface
-      const chatInterface = new ChatInterface(this.config, chatConfig, allModels);
+      const chatInterface = new ChatInterface(
+        this.config,
+        chatConfig,
+        allModels
+      );
       await chatInterface.start();
 
       return this.createResult(true, null, 'Chat session ended');

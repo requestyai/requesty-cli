@@ -11,9 +11,9 @@
 import { Command } from 'commander';
 
 // Core components
-import { CLIConfig, ModelInfo } from '../core/types';
-import { RequestyAPI } from '../core/api';
 import type { ChatConfig } from '../chat/types/chat-types';
+import { RequestyAPI } from '../core/api';
+import { CLIConfig, ModelInfo } from '../core/types';
 
 // Orchestrator
 import { CLIOrchestrator } from './core/cli-orchestrator';
@@ -127,15 +127,16 @@ async function main(): Promise<void> {
         '../chat/config/featured-models'
       );
 
-      // Create orchestrator to get models
-      const orchestrator = new CLIOrchestrator(config);
+      // Create API client to get models
       const api = new RequestyAPI(config);
       let allModels: ModelInfo[] = [];
 
       try {
         allModels = await api.getModels();
       } catch (error) {
-        console.warn('⚠️  Failed to fetch models from API, continuing without recent models');
+        console.warn(
+          '⚠️  Failed to fetch models from API, continuing without recent models'
+        );
       }
 
       // Create chat configuration
