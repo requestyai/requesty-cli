@@ -24,6 +24,9 @@ build/
 .DS_Store
 Thumbs.db
 
+# AI/ML Tools
+.hive-mind/
+
 # Test files
 test-document.pdf
 *.test.pdf
