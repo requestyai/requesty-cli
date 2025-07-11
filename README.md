@@ -1,399 +1,284 @@
-# 🚀 Requesty CLI v2.0
+# Requesty CLI
 
-A beautiful, interactive TypeScript CLI for testing AI models with **real-time streaming responses** and gorgeous terminal UI.
+[![npm version](https://img.shields.io/npm/v/requesty-cli.svg)](https://www.npmjs.com/package/requesty-cli)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js Version](https://img.shields.io/node/v/requesty-cli.svg)](https://nodejs.org)
 
-## ✨ Features
+![Requesty CLI Demo](https://raw.githubusercontent.com/thibaultjaigu/requesty-cli/main/assets/demo.gif)
 
-- 🎨 **Beautiful Interactive UI** - Gradient text, progress bars, and colorful displays
-- 📡 **Real-time Streaming** - Server-sent events with live token-per-second metrics
-- 🎯 **Smart Model Selection** - Provider-based organization with sensible defaults
-- 📊 **Live Progress Tracking** - Visual progress bars with speed indicators
-- 🔄 **Persistent Session** - Stay in the CLI, test multiple prompts
-- 🌈 **Rich Terminal Experience** - Tables, spinners, and beautiful formatting
-- 📄 **PDF Chat** - Upload and chat with PDF documents using AI
-- 👍 **Feedback System** - Give thumbs up/down feedback after each AI response
+This repository contains the Requesty CLI, a command-line AI workflow tool that connects to multiple AI models, enabling model comparison, interactive chat, and intelligent PDF document analysis.
 
-## 🎯 Default Models
+With the Requesty CLI you can:
 
-The CLI comes pre-configured with these high-quality models:
+- **Compare AI models** side-by-side with streaming responses and real-time performance metrics
+- **Chat interactively** with your favorite AI models in a ChatGPT-style terminal experience
+- **Analyze PDF documents** using AI to extract insights and answer questions about your documents
+- **Access 100+ AI models** from OpenAI, Anthropic, Google, Mistral, xAI, and more
+- **Stream responses** in real-time with beautiful terminal formatting
+- **Track usage and costs** with built-in analytics and feedback systems
 
-- **OpenAI**: `gpt-4.1` - Latest GPT-4 model
-- **Alibaba**: `qwen-max` - Qwen's most capable model  
-- **Anthropic**: `claude-sonnet-4-20250514` - Claude 4 Sonnet
-- **Google**: `gemini-2.5-flash` - Fast Gemini model
-- **Google**: `gemini-2.5-pro` - Pro Gemini model
+## 🚀 Quickstart
 
-## 🛠️ Installation
+**Prerequisites:** Ensure you have Node.js version 18 or higher installed.
 
-### Prerequisites
-- Node.js 18+ 
-- npm or yarn
+### Install and Run
 
-### Setup
+Execute the following command in your terminal:
+
 ```bash
-# Clone or download the CLI
-cd requesty-cli
-
-# Install dependencies
-npm install
-
-# Build the TypeScript code
-npm run build
-
-# Make it executable
-chmod +x dist/index.js
+npm install -g requesty-cli
+requesty
 ```
 
-### Optional: Install globally
+Or run directly with npx:
+
 ```bash
-npm install -g .
-# Now you can use 'requesty' from anywhere
+npx requesty-cli
 ```
 
-## 🚀 Usage
+### Get Your API Key
 
-### Basic Usage
-```bash
-node dist/index.js
-```
+1. **Sign up** at [Requesty.ai](https://requesty.ai) for a free account
+2. **Generate an API key** from your dashboard
+3. **Set it** as an environment variable:
 
-### With API Key
-```bash
-REQUESTY_API_KEY=your-api-key node dist/index.js
-```
-
-### With Custom Options
-```bash
-node dist/index.js --api-key your-key --max-tokens 1000 --temperature 0.8
-```
-
-## 📄 PDF Chat with Feedback
-
-### Upload and Chat with PDFs
-```bash
-# Basic PDF chat
-node dist/cli/index.js pdf-chat path/to/document.pdf
-
-# With custom model and options
-node dist/cli/index.js pdf-chat document.pdf -m openai/gpt-4o --temperature 0.5
-```
-
-### PDF Chat Flow
-
-1. **PDF Upload & Processing**
-   ```
-   📄 Converting PDF to markdown...
-   ✅ Successfully processed PDF:
-      📄 File: document.pdf
-      📊 Pages: 25
-      📝 Words: 8,542
-      🔤 Characters: 52,031
-   🚀 PDF chat session initialized!
-   💡 Ask your first question about the document...
-   ```
-
-2. **Interactive Chat**
-   ```
-   🔍 Your first question about the PDF: What are the main topics covered?
-   
-   🤖 Expert Analysis:
-   [AI streams response in real-time...]
-   
-   ⏱️  Response time: 1,247ms
-   ```
-
-3. **Feedback System** (NEW!)
-   ```
-   Give feedback? (u = 👍, d = 👎, enter to skip): u
-   Sending feedback 👍...
-   ✅ Feedback sent successfully! 👍
-   
-   💬 Your follow-up question: Tell me more about section 3...
-   ```
-
-### PDF Chat Commands
-- **Ask questions** - Any question about the PDF content
-- **"info"** - Show session information (pages, words, model, etc.)
-- **"summary"** - Show conversation summary
-- **"help"** - Show available commands
-- **"exit"** or **"quit"** - End the session
-
-### Feedback System
-After each AI response, you'll see:
-```
-Give feedback? (u = 👍, d = 👎, enter to skip):
-```
-- Type **"u"** for thumbs up 👍
-- Type **"d"** for thumbs down 👎  
-- Press **Enter** to skip
-- Feedback is sent to the Requesty feedback API automatically
-
-## 🎮 Interactive Flow
-
-### 1. Welcome Screen
-```
-██████╗ ███████╗ ██████╗ ██╗   ██╗███████╗███████╗████████╗██╗   ██╗
-██╔══██╗██╔════╝██╔═══██╗██║   ██║██╔════╝██╔════╝╚══██╔══╝╚██╗ ██╔╝
-██████╔╝█████╗  ██║   ██║██║   ██║█████╗  ███████╗   ██║    ╚████╔╝ 
-██╔══██╗██╔══╝  ██║▄▄ ██║██║   ██║██╔══╝  ╚════██║   ██║     ╚██╔╝  
-██║  ██║███████╗╚██████╔╝╚██████╔╝███████╗███████║   ██║      ██║   
-╚═╝  ╚═╝╚══════╝ ╚══▀▀═╝  ╚═════╝ ╚══════╝╚══════╝   ╚═╝      ╚═╝   
-
-🚀 AI Model Testing CLI with Streaming
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
-
-### 2. Main Menu
-```
-? What would you like to do?
-❯ 🚀 Quick Start (5 default models)
-  🎯 Select Models  
-  ❌ Exit
-```
-
-### 3. Model Selection (if choosing "Select Models")
-```
-? Select providers:
-❯ ◉ OpenAI (128 models)
-  ◯ Anthropic (54 models)
-  ◉ Google (23 models)
-  ◯ Alibaba (3 models)
-  ◯ xAI (10 models)
-```
-
-### 4. Prompt Input
-```
-? 💬 Enter your prompt: Write a haiku about programming
-```
-
-### 5. Live Streaming Progress
-```
-✅ Selected Models:
-┌───┬───────────┬──────────────────────────────┐
-│ # │ Provider  │ Model                        │
-├───┼───────────┼──────────────────────────────┤
-│ 1 │ OpenAI    │ gpt-4.1                      │
-│ 2 │ Alibaba   │ qwen-max                     │
-│ 3 │ Anthropic │ claude-sonnet-4-20250514     │
-│ 4 │ Google    │ gemini-2.5-flash             │
-│ 5 │ Google    │ gemini-2.5-pro               │
-└───┴───────────┴──────────────────────────────┘
-
-🚀 Testing 5 models with streaming...
-
-gpt-4.1 |████████████████████████████████████████| 100% | 45 tok/s | 67 tokens | 0.3s
-✅ gpt-4.1 completed
-
-📝 gpt-4.1 Response:
-────────────────────────────────────────────────────────────
-Code flows like stream,
-Bugs dance in morning debug—
-Coffee fuels the dream.
-────────────────────────────────────────────────────────────
-```
-
-### 6. Summary Table
-```
-📊 Summary:
-┌─────────────────────────────┬────────┬──────────┬─────────┬────────┐
-│ Model                       │ Status │ Duration │ Speed   │ Tokens │
-├─────────────────────────────┼────────┼──────────┼─────────┼────────┤
-│ gpt-4.1                     │ ✅     │ 1450ms   │ 45 tok/s│ 67     │
-│ qwen-max                    │ ✅     │ 1200ms   │ 52 tok/s│ 63     │
-│ claude-sonnet-4-20250514    │ ✅     │ 1800ms   │ 38 tok/s│ 71     │
-│ gemini-2.5-flash            │ ✅     │ 900ms    │ 67 tok/s│ 58     │
-│ gemini-2.5-pro              │ ✅     │ 1100ms   │ 55 tok/s│ 69     │
-└─────────────────────────────┴────────┴──────────┴─────────┴────────┘
-```
-
-### 7. Continue or Exit
-```
-? Would you like to test another prompt? (Y/n)
-```
-
-## 🎛️ Command Line Options
-
-### Main CLI Options
-```bash
-Options:
-  -k, --api-key <key>          API key for authentication
-  -t, --timeout <ms>           Request timeout in milliseconds (default: 60000)
-  --temperature <temp>         Temperature for responses (default: 0.7)
-  -h, --help                   Display help for command
-  -V, --version                Display version number
-
-Commands:
-  security                     Show security status and configuration
-  pdf-chat <pdf-path>          Chat with a PDF document using AI
-```
-
-### PDF Chat Options
-```bash
-Usage: requesty pdf-chat [options] <pdf-path>
-
-Arguments:
-  pdf-path                     Path to the PDF file to chat with
-
-Options:
-  -m, --model <model>          AI model to use for chat (default: "openai/gpt-4o")
-  -k, --api-key <key>          API key for authentication
-  -t, --timeout <ms>           Request timeout in milliseconds (default: "60000")
-  --temperature <temp>         Temperature for responses (default: "0.7")
-  -h, --help                   Display help for command
-```
-
-## 🔐 Authentication
-
-### Environment Variable (Recommended)
 ```bash
 export REQUESTY_API_KEY="your-api-key-here"
 ```
 
-### Command Line
+You are now ready to use the Requesty CLI!
+
+## 📖 Examples
+
+Once the CLI is running, you can start interacting with AI models from your terminal.
+
+### Quick Model Comparison
+
+Test multiple models with a single prompt:
+
 ```bash
-node dist/index.js --api-key your-api-key-here
+requesty
+> 🚀 Quick Start (5 default models)
+
+# Or compare specific models
+requesty quick-start "Explain quantum computing" true "gpt-4o,claude-3-5-sonnet"
 ```
 
-## 🌟 Advanced Features
+### Interactive AI Chat
 
-### Real-time Streaming
-- **Server-Sent Events (SSE)** - Proper streaming implementation
-- **Live Token Metrics** - Tokens per second, total tokens
-- **Progress Visualization** - Beautiful progress bars with ETA
-- **Speed Indicators** - Real-time processing speed
+Start a ChatGPT-style conversation:
 
-### Model Organization
-- **Provider-based Grouping** - Models organized by provider
-- **Smart Defaults** - Curated selection of best models
-- **Flexible Selection** - Choose any combination of models
-- **Model Metadata** - Provider info, model names, capabilities
-
-### Session Management
-- **Persistent CLI** - Stay in the CLI for multiple tests
-- **Quick Restart** - Easy to test different prompts
-- **Graceful Exit** - Clean shutdown with goodbye message
-
-## 🎨 Visual Experience
-
-The CLI features:
-- **Gradient Text** - Beautiful rainbow gradients for headers
-- **Progress Bars** - Real-time progress with custom themes
-- **Spinners** - Elegant loading animations
-- **Tables** - Clean, formatted result displays
-- **Color Coding** - Status indicators, provider colors
-- **Figlet Art** - ASCII art title screen
-
-## 🔧 Development
-
-### Build
 ```bash
-npm run build
+requesty chat
+> 💬 Regular Chat (ChatGPT-style)
+> Choose your model: Claude Sonnet 4
+> 💬 You: Help me write a Python web scraper
+> 🤖 AI: I'll help you create a Python web scraper...
 ```
 
-### Development Mode
+Or start directly with a specific model:
+
 ```bash
-npm run dev
+requesty chat openai/gpt-4o
+requesty chat anthropic/claude-sonnet-4-20250514
 ```
 
-### Testing
+### PDF Document Analysis
+
+Chat with your PDF documents:
+
 ```bash
-npm test
+requesty pdf-chat research-paper.pdf
+> 🔍 Your first question about the PDF: What are the main findings?
+> 🤖 Assistant: Based on the document, the main findings are...
 ```
 
-## 📝 Example Session
+## 🎯 Features
 
+### Model Comparison
+- **Side-by-side testing** of multiple AI models
+- **Streaming responses** with real-time output
+- **Performance metrics** including response time, token usage, and cost
+- **Customizable model selection** from 100+ available models
+
+### Interactive Chat
+- **Continuous conversations** with context retention
+- **Featured models** with smart categorization
+- **Recent models** sorted by creation date
+- **Built-in commands**: `help`, `info`, `summary`, `clear`, `exit`
+- **Feedback system** to improve response quality
+
+### PDF Analysis
+- **Intelligent document parsing** with markdown conversion
+- **Context-aware responses** based on document content
+- **Multi-turn conversations** about your documents
+- **Support for complex PDFs** including technical papers and reports
+
+### Security & Performance
+- **Secure API key storage** with encryption
+- **Rate limiting** and request management
+- **Response caching** for improved performance
+- **Comprehensive error handling** and recovery
+
+## 🛠️ Commands
+
+### Interactive Mode
 ```bash
-$ node dist/index.js
-
-██████╗ ███████╗ ██████╗ ██╗   ██╗███████╗███████╗████████╗██╗   ██╗
-██╔══██╗██╔════╝██╔═══██╗██║   ██║██╔════╝██╔════╝╚══██╔══╝╚██╗ ██╔╝
-██████╔╝█████╗  ██║   ██║██║   ██║█████╗  ███████╗   ██║    ╚████╔╝ 
-██╔══██╗██╔══╝  ██║▄▄ ██║██║   ██║██╔══╝  ╚════██║   ██║     ╚██╔╝  
-██║  ██║███████╗╚██████╔╝╚██████╔╝███████╗███████║   ██║      ██║   
-╚═╝  ╚═╝╚══════╝ ╚══▀▀═╝  ╚═════╝ ╚══════╝╚══════╝   ╚═╝      ╚═╝   
-
-🚀 AI Model Testing CLI with Streaming
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-✅ Loaded 10 providers with 338 models
-
-? What would you like to do?
-❯ 🚀 Quick Start (5 default models)
-
-? 💬 Enter your prompt: Explain quantum computing in simple terms
-
-🚀 Testing 5 models with streaming...
-
-gpt-4.1 |████████████████████████████████████████| 100% | 42 tok/s | 156 tokens | 0.8s
-✅ gpt-4.1 completed
-
-📝 gpt-4.1 Response:
-────────────────────────────────────────────────────────────
-Quantum computing is like having a magical calculator that can try many solutions at once...
-[streaming response continues...]
-────────────────────────────────────────────────────────────
-
-? Would you like to test another prompt? Yes
-
-? 💬 Enter your prompt: Write a Python function to sort a list
-
-[Process continues...]
+requesty                    # Start interactive menu
 ```
 
-## 🐛 Troubleshooting
-
-### Common Issues
-
-**Build Errors:**
+### Direct Commands
 ```bash
-rm -rf node_modules package-lock.json
+requesty chat [model]       # Start chat session
+requesty pdf-chat <file>    # Analyze PDF document
+requesty security           # Check security status
+requesty --help            # Show help information
+```
+
+### Command Options
+```bash
+# Global options
+-k, --api-key <key>        # API key for authentication
+-t, --timeout <ms>         # Request timeout (default: 60000)
+--temperature <temp>       # Response temperature (default: 0.7)
+
+# Chat options
+requesty chat --temperature 0.9 --timeout 30000
+
+# PDF chat options
+requesty pdf-chat document.pdf --model openai/gpt-4o
+```
+
+## 🔧 Configuration
+
+### Environment Variables
+```bash
+REQUESTY_API_KEY="your-api-key"    # Your Requesty API key
+DEBUG=true                         # Enable debug logging
+```
+
+### Supported Models
+
+The CLI supports models from multiple providers:
+
+- **OpenAI**: GPT-4o, GPT-4.1 Turbo, GPT-4 Mini
+- **Anthropic**: Claude Sonnet 4, Claude Haiku 4
+- **Google**: Gemini 2.5 Flash, Gemini 2.0 Pro
+- **Mistral**: Mistral Large, Mixtral
+- **xAI**: Grok 2.5
+- **DeepSeek**: DeepSeek V3
+- And many more...
+
+## 🚀 Popular Workflows
+
+### Development Assistant
+```bash
+> Help me refactor this function to use async/await
+> Write unit tests for the authentication module
+> Explain this regex pattern: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/
+```
+
+### Document Research
+```bash
+requesty pdf-chat specification.pdf
+> Summarize the technical requirements
+> What are the API endpoints described?
+> Generate implementation notes based on section 3
+```
+
+### Learning & Exploration
+```bash
+> Explain the differences between TCP and UDP
+> Show me examples of Python decorators
+> How do I implement a binary search tree?
+```
+
+### Content Creation
+```bash
+> Write a professional email declining a meeting
+> Create a README template for my project
+> Generate test data for a user database
+```
+
+## 📦 Installation Options
+
+### Global Installation (Recommended)
+```bash
+npm install -g requesty-cli
+```
+
+### Local Project Installation
+```bash
+npm install --save-dev requesty-cli
+```
+
+### Development Setup
+```bash
+git clone https://github.com/thibaultjaigu/requesty-cli
+cd requesty-cli
 npm install
 npm run build
+npm link
 ```
 
-**Permission Errors:**
-```bash
-chmod +x dist/index.js
-```
+## 🔍 Troubleshooting
 
-**API Key Issues:**
+### API Key Issues
 ```bash
+# Check if key is set
+echo $REQUESTY_API_KEY
+
+# Set key for current session
 export REQUESTY_API_KEY="your-key"
-# or
+
+# Set key permanently (add to ~/.bashrc or ~/.zshrc)
 echo 'export REQUESTY_API_KEY="your-key"' >> ~/.bashrc
 ```
 
-**Streaming Issues:**
-- Ensure stable internet connection
-- Check firewall settings for SSE support
-- Verify API key has streaming permissions
+### Connection Problems
+- Ensure you have an active internet connection
+- Check if you're behind a corporate firewall
+- Verify the API endpoint is accessible: `curl https://router.requesty.ai/v1/models`
 
-## 📈 Performance
-
-- **Streaming**: Real-time token processing
-- **Concurrent**: Smart batching for better UX
-- **Efficient**: Minimal memory usage
-- **Responsive**: Immediate visual feedback
-
-## 🛡️ Security
-
-- API keys can be passed via environment variables
-- No logging of sensitive data
-- Secure HTTPS connections to Requesty API
-- Token-based authentication
+### Performance Tips
+- Use streaming mode for faster perceived responses
+- Select appropriate models for your use case (smaller models for simple tasks)
+- Enable response caching for repeated queries
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+### Development
+```bash
+# Install dependencies
+npm install
+
+# Run tests
+npm test
+
+# Build the project
+npm run build
+
+# Run in development mode
+npm run dev
+```
 
 ## 📄 License
 
-MIT License - see LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🔗 Links
+
+- **Website**: [requesty.ai](https://requesty.ai)
+- **Documentation**: [docs.requesty.ai](https://docs.requesty.ai)
+- **API Reference**: [api.requesty.ai](https://api.requesty.ai)
+- **Support**: [support@requesty.ai](mailto:support@requesty.ai)
+
+## 🙏 Acknowledgments
+
+Built with ❤️ by the Requesty team. Special thanks to all contributors and the open-source community.
 
 ---
 
-**Made with ❤️ by Claude Code & Claude Flow Hive Mind**# requesty-cli
+**Note**: Requesty CLI is in active development. Features and commands may change. Always refer to `requesty --help` for the most up-to-date information.
