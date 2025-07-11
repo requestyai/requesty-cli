@@ -9,6 +9,7 @@ import { RequestyAPI } from '../../core/api';
 import { StreamingClient } from '../../core/streaming';
 import { CLIConfig, ModelInfo } from '../../core/types';
 import { SecureApiClient, SecureKeyManager } from '../../security';
+import type { ChatConfig } from '../../chat/types/chat-types';
 import { InteractiveUI } from '../../ui/interactive-ui';
 import { KeyManager } from '../../utils/key-manager';
 import { SessionManager } from '../../utils/session-manager';
@@ -158,6 +159,9 @@ export class CLIOrchestrator {
         case 'select':
           await this.handleCustomSelection();
           break;
+        case 'chat':
+          await this.handleRegularChat();
+          break;
         case 'pdf-chat':
           await this.handlePDFChat();
           break;
@@ -185,6 +189,43 @@ export class CLIOrchestrator {
    */
   private async handleCustomSelection(): Promise<void> {
     await this.modelTester.runCustomSelection(this.models);
+  }
+
+  /**
+   * Handle regular chat functionality
+   * @private
+   */
+  private async handleRegularChat(): Promise<void> {
+    try {
+      console.log('\n💬 Regular Chat - ChatGPT-style Conversation');
+      console.log(
+        '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+      );
+
+      // Import chat interface
+      const { ChatInterface } = await import('../../chat/ui/chat-interface');
+      const { getDefaultChatModel, DEFAULT_SYSTEM_PROMPT } = await import(
+        '../../chat/config/featured-models'
+      );
+
+      // Create chat configuration
+      const chatConfig: ChatConfig = {
+        model: getDefaultChatModel(),
+        temperature: this.config.temperature || 0.7,
+        includeSystemPrompt: true,
+        conversationHistory: true,
+        systemPrompt: DEFAULT_SYSTEM_PROMPT,
+      };
+
+      // Create and start chat interface
+      const chatInterface = new ChatInterface(this.config, chatConfig, this.models);
+      await chatInterface.start();
+    } catch (error) {
+      console.error(
+        '❌ Chat Error:',
+        error instanceof Error ? error.message : 'Unknown error'
+      );
+    }
   }
 
   /**

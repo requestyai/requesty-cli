@@ -177,7 +177,7 @@ export class PDFChatClient {
 
   async sendFeedback(requestId: string, thumbs: 'up' | 'down'): Promise<FeedbackResponse> {
     try {
-      const feedbackUrl = `http://localhost:30000/feedback/${requestId}`;
+      const feedbackUrl = `https://api.requesty.ai/feedback/${requestId}`;
       const apiKey = this.config.apiKey || process.env.REQUESTY_API_KEY;
 
       if (!apiKey || apiKey === '<REQUESTY_API_KEY>') {

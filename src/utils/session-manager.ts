@@ -6,7 +6,7 @@ import * as os from 'os';
 export interface RequestyMetadata {
   user_id: string;
   trace_id: string;
-  mode: 'model_comparison' | 'prompt_comparison' | 'pdf_chat';
+  mode: 'model_comparison' | 'prompt_comparison' | 'pdf_chat' | 'chat';
   extra?: Record<string, any>;
 }
 

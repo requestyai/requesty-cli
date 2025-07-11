@@ -11,7 +11,9 @@
 import { Command } from 'commander';
 
 // Core components
-import { CLIConfig } from '../core/types';
+import { CLIConfig, ModelInfo } from '../core/types';
+import { RequestyAPI } from '../core/api';
+import type { ChatConfig } from '../chat/types/chat-types';
 
 // Orchestrator
 import { CLIOrchestrator } from './core/cli-orchestrator';
@@ -24,7 +26,7 @@ import { PDFChatInterface } from '../pdf-chat/ui/chat-interface';
  * Default configuration for the CLI
  */
 const DEFAULT_CONFIG: CLIConfig = {
-  baseURL: 'http://localhost:40000/v1',
+  baseURL: 'https://router.requesty.ai/v1',
   timeout: 60000,
   temperature: 0.7,
   apiKey: process.env.REQUESTY_API_KEY,
@@ -101,6 +103,53 @@ async function main(): Promise<void> {
     .action(async () => {
       const orchestrator = new CLIOrchestrator(DEFAULT_CONFIG);
       await orchestrator.handleSecurityStatus();
+    });
+
+  // Chat command
+  program
+    .command('chat')
+    .description('Start an interactive AI chat session')
+    .argument('[model]', 'Optional model ID to use (e.g., "openai/gpt-4o")')
+    .option('-k, --api-key <key>', 'API key for authentication')
+    .option('-t, --timeout <ms>', 'Request timeout in milliseconds', '60000')
+    .option('--temperature <temp>', 'Temperature for responses', '0.7')
+    .action(async (model, options) => {
+      const config: CLIConfig = {
+        ...DEFAULT_CONFIG,
+        apiKey: options.apiKey || process.env.REQUESTY_API_KEY,
+        timeout: parseInt(options.timeout),
+        temperature: parseFloat(options.temperature),
+      };
+
+      // Import chat interface and types
+      const { ChatInterface } = await import('../chat/ui/chat-interface');
+      const { getDefaultChatModel, DEFAULT_SYSTEM_PROMPT } = await import(
+        '../chat/config/featured-models'
+      );
+
+      // Create orchestrator to get models
+      const orchestrator = new CLIOrchestrator(config);
+      const api = new RequestyAPI(config);
+      let allModels: ModelInfo[] = [];
+
+      try {
+        allModels = await api.getModels();
+      } catch (error) {
+        console.warn('⚠️  Failed to fetch models from API, continuing without recent models');
+      }
+
+      // Create chat configuration
+      const chatConfig: ChatConfig = {
+        model: model || getDefaultChatModel(),
+        temperature: parseFloat(options.temperature),
+        includeSystemPrompt: true,
+        conversationHistory: true,
+        systemPrompt: DEFAULT_SYSTEM_PROMPT,
+      };
+
+      // Create and start chat interface
+      const chatInterface = new ChatInterface(config, chatConfig, allModels);
+      await chatInterface.start();
     });
 
   // PDF Chat command

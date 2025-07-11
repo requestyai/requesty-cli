@@ -10,7 +10,7 @@ import { InteractiveUI } from '../../ui/interactive-ui';
 /**
  * Menu actions available in the CLI
  */
-export type MenuAction = 'quick' | 'select' | 'pdf-chat' | 'security' | 'exit';
+export type MenuAction = 'quick' | 'select' | 'chat' | 'pdf-chat' | 'security' | 'exit';
 
 /**
  * Handles all menu-related operations for the CLI

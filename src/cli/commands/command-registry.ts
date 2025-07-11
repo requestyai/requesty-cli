@@ -1,9 +1,11 @@
 import { BaseCommand, CommandMetadata } from './base-command';
 import { QuickStartCommand } from './quick-start-command';
 import { ModelSelectionCommand } from './model-selection-command';
+import { ChatCommand } from './chat-command';
 import { RequestyAPI } from '../../core/api';
 import { TerminalUI } from '../../ui/terminal-ui';
 import { ErrorHandler } from '../../utils/error-handler';
+import { CLIConfig } from '../../core/types';
 
 /**
  * Command registry for managing all CLI commands
@@ -14,10 +16,12 @@ export class CommandRegistry {
   private aliases: Map<string, string> = new Map();
   private api: RequestyAPI;
   private ui: TerminalUI;
+  private config: CLIConfig;
 
-  constructor(api: RequestyAPI, ui: TerminalUI) {
+  constructor(api: RequestyAPI, ui: TerminalUI, config: CLIConfig) {
     this.api = api;
     this.ui = ui;
+    this.config = config;
     this.registerDefaultCommands();
   }
 
@@ -28,12 +32,15 @@ export class CommandRegistry {
     // Register core commands
     this.register(new QuickStartCommand(this.api, this.ui));
     this.register(new ModelSelectionCommand(this.api, this.ui));
+    this.register(new ChatCommand(this.api, this.ui, this.config));
     
     // Register aliases
     this.registerAlias('qs', 'quick-start');
     this.registerAlias('ms', 'model-selection');
     this.registerAlias('select', 'model-selection');
     this.registerAlias('test', 'quick-start');
+    this.registerAlias('c', 'chat');
+    this.registerAlias('conversation', 'chat');
   }
 
   /**

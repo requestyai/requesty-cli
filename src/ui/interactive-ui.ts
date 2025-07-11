@@ -48,7 +48,7 @@ export class InteractiveUI {
   }
 
   async showMainMenu(): Promise<
-    'quick' | 'select' | 'pdf-chat' | 'security' | 'exit'
+    'quick' | 'select' | 'chat' | 'pdf-chat' | 'security' | 'exit'
   > {
     const { action } = await inquirer.prompt([
       {
@@ -63,6 +63,10 @@ export class InteractiveUI {
           {
             name: '🎯 Select Models',
             value: 'select',
+          },
+          {
+            name: '💬 Regular Chat (ChatGPT-style)',
+            value: 'chat',
           },
           {
             name: '📄 Chat with PDF',
